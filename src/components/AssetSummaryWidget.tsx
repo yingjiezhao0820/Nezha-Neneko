@@ -290,6 +290,17 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
     return () => window.removeEventListener(ASSET_TRADE_OPEN_EVENT, openAssetTrade)
   }, [items])
 
+  useEffect(() => {
+    if (!tradeItem) return
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setTradeItem(null)
+    }
+
+    window.addEventListener("keydown", closeOnEscape)
+    return () => window.removeEventListener("keydown", closeOnEscape)
+  }, [tradeItem])
+
   const visibleItems = useMemo(() => {
     const filtered = excludeFree ? items.filter((item) => !item.isFree && !item.isUsageBased && !item.isFreeTagged) : items
     return sortAssetItems(filtered, sortBy)
