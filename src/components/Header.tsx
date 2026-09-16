@@ -1,28 +1,23 @@
-import { ModeToggle } from "@/components/ThemeSwitcher"
+import { ASSET_SUMMARY_OPEN_EVENT } from "@/components/AssetSummaryWidget"
+import CurrentTime from "@/components/CurrentTime"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useBackground } from "@/hooks/use-background"
 import { useWebSocketContext } from "@/hooks/use-websocket-context"
 import { fetchSetting } from "@/lib/nezha-api"
-import { cn } from "@/lib/utils"
-import NumberFlow, { NumberFlowGroup } from "@number-flow/react"
 import { useQuery } from "@tanstack/react-query"
 import { AnimatePresence, m } from "framer-motion"
-import { ImageMinus, LogIn } from "lucide-react"
-import { DateTime } from "luxon"
-import { useEffect, useState } from "react"
+import { CircleDollarSign, LogIn } from "lucide-react"
+import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { LanguageSwitcher } from "./LanguageSwitcher"
-import { SearchButton } from "./SearchButton"
 import { LoadingSpinner } from "./loading/Loader"
 import { Button } from "./ui/button"
 
 function Header() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { backgroundImage, updateBackground } = useBackground()
 
   const { data: settingData, isLoading } = useQuery({
     queryKey: ["setting"],
@@ -41,8 +36,7 @@ function Header() {
   const customLogo = window.CustomLogo || "/favicon.ico"
 
   const customDesc = settingData?.data?.config?.site_desc || (window as any).CustomDesc || "Komari Monitor"
-
-  const customMobileBackgroundImage = window.CustomMobileBackgroundImage !== "" ? window.CustomMobileBackgroundImage : undefined
+  const showAssetCard = (window as unknown as Record<string, unknown>).ShowAssetCard === true
 
   useEffect(() => {
     const link = document.querySelector("link[rel*='icon']") || document.createElement("link")
@@ -58,22 +52,6 @@ function Header() {
   // useEffect(() => {
   //   document.title = siteName || "哪吒监控 Nezha Monitoring"
   // }, [siteName])
-
-  const handleBackgroundToggle = () => {
-    if (window.CustomBackgroundImage) {
-      // Store the current background image before removing it
-      sessionStorage.setItem("savedBackgroundImage", window.CustomBackgroundImage)
-      updateBackground(undefined)
-    } else {
-      // Restore the saved background image
-      const savedImage = sessionStorage.getItem("savedBackgroundImage")
-      if (savedImage) {
-        updateBackground(savedImage)
-      }
-    }
-  }
-
-  const customBackgroundImage = backgroundImage
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -103,39 +81,28 @@ function Header() {
             <Links />
             <DashboardLink />
           </div>
-          <SearchButton />
-          <LanguageSwitcher />
-          <ModeToggle />
-          {(customBackgroundImage || sessionStorage.getItem("savedBackgroundImage")) && (
+          {showAssetCard && (
             <Button
+              type="button"
               variant="outline"
               size="sm"
-              onClick={handleBackgroundToggle}
-              className={cn("rounded-full px-[9px] bg-white dark:bg-black", {
-                "bg-white/70 dark:bg-black/70": customBackgroundImage,
-                "hidden sm:block": customMobileBackgroundImage,
-              })}
+              className="rounded-full border-white/10 bg-neutral-900/45 px-[9px] text-white shadow-none backdrop-blur-md hover:bg-neutral-900/55 hover:text-white"
+              aria-label="打开资产统计"
+              title="资产统计"
+              onClick={() => window.dispatchEvent(new Event(ASSET_SUMMARY_OPEN_EVENT))}
             >
-              <ImageMinus className="w-4 h-4" />
+              <CircleDollarSign className="size-4" />
             </Button>
           )}
-          <a href="/admin" target="_blank">
+          <LanguageSwitcher />
+          <a href="/admin" target="_blank" rel="noreferrer">
             <Button
               variant="outline"
               size="sm"
-              className={cn("rounded-full px-[9px] bg-white dark:bg-black", {
-                "bg-white/70 dark:bg-black/70": customBackgroundImage,
-              })}
+              className="rounded-full border-white/10 bg-neutral-900/45 px-[9px] text-white shadow-none backdrop-blur-md hover:bg-neutral-900/55 hover:text-white"
               title={t("login")}
             >
-              {/* {connected ? onlineCount : <Loader visible={true} />} */}
-              {/* <p className="text-muted-foreground">{connected ? t("online") : t("offline")}</p> */}
-              {/* <span
-              className={cn("h-2 w-2 rounded-full bg-green-500", {
-                "bg-red-500": !connected,
-              })}
-            ></span> */}
-              <LogIn />
+              <LogIn className="size-4" />
             </Button>
           </a>
         </section>
@@ -273,37 +240,9 @@ function DashboardLink() {
 }
 
 function Overview() {
-  const { t } = useTranslation()
-  const [time, setTime] = useState({
-    hh: DateTime.now().setLocale("en-US").hour,
-    mm: DateTime.now().setLocale("en-US").minute,
-    ss: DateTime.now().setLocale("en-US").second,
-  })
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime({
-        hh: DateTime.now().setLocale("en-US").hour,
-        mm: DateTime.now().setLocale("en-US").minute,
-        ss: DateTime.now().setLocale("en-US").second,
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [])
   return (
-    <section className={"mt-10 flex flex-col md:mt-16 header-timer"}>
-      <p className="text-base font-semibold">👋 {t("overview")}</p>
-      <div className="flex items-center gap-1.5">
-        <p className="text-sm font-medium opacity-50">{t("whereTheTimeIs")}</p>
-        <NumberFlowGroup>
-          <div style={{ fontVariantNumeric: "tabular-nums" }} className="flex text-sm font-medium mt-0.5">
-            <NumberFlow trend={1} value={time.hh} format={{ minimumIntegerDigits: 2 }} />
-            <NumberFlow prefix=":" trend={1} value={time.mm} digits={{ 1: { max: 5 } }} format={{ minimumIntegerDigits: 2 }} />
-            <p className="mt-[0.5px]">:{time.ss.toString().padStart(2, "0")}</p>
-          </div>
-        </NumberFlowGroup>
-      </div>
+    <section className="mt-10 flex flex-col md:mt-16 header-timer">
+      <CurrentTime />
     </section>
   )
 }

@@ -2,10 +2,10 @@
 
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { fetchMonitor } from "@/lib/nezha-api"
-import { formatTime } from "@/lib/utils"
+import { cn, formatTime } from "@/lib/utils"
 import { NezhaMonitor } from "@/types/nezha-api"
 import { useQuery } from "@tanstack/react-query"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 
@@ -62,6 +62,7 @@ function getLatestLoss(monitor: NezhaMonitor) {
 
 export function NetworkChart({ server_id, show }: { server_id: number; show: boolean }) {
   const { t } = useTranslation()
+  const [selectedMonitorIds, setSelectedMonitorIds] = useState<Set<number> | null>(null)
   const { data: monitorData } = useQuery({
     queryKey: ["monitor", server_id, 24],
     queryFn: () => fetchMonitor(server_id, 24),
@@ -72,18 +73,42 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
   })
 
   const monitors = monitorData?.data || []
-  const chartData = useMemo(() => combineMonitorData(monitors), [monitors])
+  const monitorColors = useMemo(
+    () => new Map(monitors.map((monitor, index) => [monitor.monitor_id, CHART_COLORS[index % CHART_COLORS.length]])),
+    [monitors],
+  )
+  const visibleMonitors = useMemo(() => {
+    if (selectedMonitorIds === null) return monitors
+    const selected = monitors.filter((monitor) => selectedMonitorIds.has(monitor.monitor_id))
+    return selected.length > 0 ? selected : monitors
+  }, [monitors, selectedMonitorIds])
+  const chartData = useMemo(() => combineMonitorData(visibleMonitors), [visibleMonitors])
   const chartConfig = useMemo(
     () =>
-      monitors.reduce((config, monitor, index) => {
+      visibleMonitors.reduce((config, monitor) => {
         config[monitor.monitor_name] = {
           label: monitor.monitor_name,
-          color: CHART_COLORS[index % CHART_COLORS.length],
+          color: monitorColors.get(monitor.monitor_id) || CHART_COLORS[0],
         }
         return config
       }, {} as ChartConfig),
-    [monitors],
+    [monitorColors, visibleMonitors],
   )
+
+  const toggleMonitor = (monitorId: number) => {
+    setSelectedMonitorIds((current) => {
+      if (current === null) return new Set([monitorId])
+
+      const next = new Set(current)
+      if (next.has(monitorId)) {
+        if (next.size === 1) return null
+        next.delete(monitorId)
+      } else {
+        next.add(monitorId)
+      }
+      return next
+    })
+  }
 
   if (!monitorData) return <NetworkChartLoading />
 
@@ -98,15 +123,28 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
   return (
     <section className="overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/45 shadow-none backdrop-blur-md">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-        {monitors.map((monitor) => (
-          <div className="-mr-px min-w-0 border-b border-r border-white/10 px-4 py-3" key={monitor.monitor_id}>
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-xs text-white/75">{monitor.monitor_name}</span>
-              <span className="whitespace-nowrap text-[10px] text-white/45">丢包 {getLatestLoss(monitor).toFixed(2)}%</span>
-            </div>
-            <p className="mt-1 text-base font-semibold leading-none tabular-nums text-white">{getLatestDelay(monitor).toFixed(2)}ms</p>
-          </div>
-        ))}
+        {monitors.map((monitor) => {
+          const isActive = selectedMonitorIds === null || selectedMonitorIds.has(monitor.monitor_id)
+          return (
+            <button
+              type="button"
+              className={cn(
+                "-mr-px min-w-0 border-b border-r border-white/10 px-4 py-3 text-left transition",
+                isActive ? "bg-white/[0.06]" : "opacity-40 hover:bg-white/[0.04] hover:opacity-75",
+              )}
+              key={monitor.monitor_id}
+              aria-pressed={isActive}
+              title={selectedMonitorIds === null ? `仅查看 ${monitor.monitor_name}` : isActive ? `取消选择 ${monitor.monitor_name}` : `增加 ${monitor.monitor_name}`}
+              onClick={() => toggleMonitor(monitor.monitor_id)}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate text-xs text-white/75">{monitor.monitor_name}</span>
+                <span className="whitespace-nowrap text-[10px] text-white/45">丢包 {getLatestLoss(monitor).toFixed(2)}%</span>
+              </div>
+              <p className="mt-1 text-base font-semibold leading-none tabular-nums text-white">{getLatestDelay(monitor).toFixed(2)}ms</p>
+            </button>
+          )
+        })}
       </div>
 
       <div className="border-t border-white/10 bg-black/5 px-2 pb-4 pt-5 sm:px-5">
@@ -149,13 +187,13 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
               }
             />
             <ChartLegend content={<ChartLegendContent className="flex-wrap gap-x-3 gap-y-1 text-white/70" />} />
-            {monitors.map((monitor, index) => (
+            {visibleMonitors.map((monitor) => (
               <Line
                 key={monitor.monitor_id}
                 dataKey={monitor.monitor_name}
                 name={monitor.monitor_name}
                 type="linear"
-                stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                stroke={monitorColors.get(monitor.monitor_id) || CHART_COLORS[0]}
                 strokeWidth={1.25}
                 dot={false}
                 connectNulls={true}

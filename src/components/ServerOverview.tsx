@@ -25,8 +25,6 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
   // @ts-expect-error CustomIllustration is a global variable
   const customIllustration = window.CustomIllustration || "/animated-man.webp"
 
-  const customBackgroundImage = (window.CustomBackgroundImage as string) !== "" ? window.CustomBackgroundImage : undefined
-
   return (
     <>
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4 server-overview">
@@ -34,9 +32,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
           onClick={() => {
             setStatus("all")
           }}
-          className={cn("hover:border-blue-500 cursor-pointer transition-all", {
-            "bg-card/70": customBackgroundImage,
-          })}
+          className="cursor-pointer rounded-2xl border-white/10 bg-neutral-900/45 text-white shadow-none backdrop-blur-md transition-colors hover:border-blue-500 hover:bg-neutral-900/55"
         >
           <CardContent className="flex h-full items-center px-6 py-3">
             <section className="flex flex-col gap-1">
@@ -55,12 +51,9 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
             setStatus("online")
           }}
           className={cn(
-            "cursor-pointer hover:ring-green-500 ring-1 ring-transparent transition-all",
+            "cursor-pointer rounded-2xl border-white/10 bg-neutral-900/45 text-white shadow-none backdrop-blur-md ring-1 ring-transparent transition-all hover:bg-neutral-900/55 hover:ring-green-500",
             {
-              "bg-card/70": customBackgroundImage,
-            },
-            {
-              "ring-green-500 ring-2 border-transparent": status === "online",
+              "border-transparent ring-2 ring-green-500": status === "online",
             },
           )}
         >
@@ -83,12 +76,9 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
             setStatus("offline")
           }}
           className={cn(
-            "cursor-pointer hover:ring-red-500 ring-1 ring-transparent transition-all",
+            "cursor-pointer rounded-2xl border-white/10 bg-neutral-900/45 text-white shadow-none backdrop-blur-md ring-1 ring-transparent transition-all hover:bg-neutral-900/55 hover:ring-red-500",
             {
-              "bg-card/70": customBackgroundImage,
-            },
-            {
-              "ring-red-500 ring-2 border-transparent": status === "offline",
+              "border-transparent ring-2 ring-red-500": status === "offline",
             },
           )}
         >
@@ -106,9 +96,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
           </CardContent>
         </Card>
         <Card
-          className={cn("hover:ring-purple-500 ring-1 ring-transparent transition-all", {
-            "bg-card/70": customBackgroundImage,
-          })}
+          className="rounded-2xl border-white/10 bg-neutral-900/45 text-white shadow-none backdrop-blur-md ring-1 ring-transparent transition-all hover:bg-neutral-900/55 hover:ring-purple-500"
         >
           <CardContent className="flex h-full items-center relative px-6 py-3">
             <section className="flex flex-col gap-1 w-full">

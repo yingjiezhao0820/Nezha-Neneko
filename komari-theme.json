@@ -117,6 +117,13 @@
                 "help": "开启后在页面底部短暂显示访客 IP、地区和运营商信息。"
             },
             {
+                "key": "ShowGroupBar",
+                "name": "显示首页分组栏",
+                "type": "switch",
+                "default": true,
+                "help": "控制首页地图、服务、布局、服务器分组与排序组成的整栏是否显示。"
+            },
+            {
                 "key": "VisitorCapsuleColor",
                 "name": "访客胶囊颜色",
                 "type": "select",

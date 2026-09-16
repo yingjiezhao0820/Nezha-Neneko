@@ -5,7 +5,6 @@ import { Route, BrowserRouter as Router, Routes, useLocation } from "react-route
 
 import { DashCommand } from "./components/DashCommand"
 import ErrorBoundary from "./components/ErrorBoundary"
-import Footer from "./components/Footer"
 import Header, { RefreshToast } from "./components/Header"
 import PrivateAccessGate from "./components/PrivateAccessGate"
 import { useBackground } from "./hooks/use-background"
@@ -114,7 +113,6 @@ const MainApp: React.FC = () => {
             <Route path="/error" element={<ErrorPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          {!isServerDetail && <Footer />}
         </main>
       </div>
     </ErrorBoundary>

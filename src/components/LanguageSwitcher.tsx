@@ -2,14 +2,11 @@
 
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
 import { CheckCircleIcon, LanguageIcon } from "@heroicons/react/20/solid"
 import { useTranslation } from "react-i18next"
 
 export function LanguageSwitcher() {
   const { t, i18n } = useTranslation()
-
-  const customBackgroundImage = (window.CustomBackgroundImage as string) !== "" ? window.CustomBackgroundImage : undefined
 
   const locale = i18n.languages[0]
 
@@ -34,9 +31,7 @@ export function LanguageSwitcher() {
         <Button
           variant="outline"
           size="sm"
-          className={cn("rounded-full px-[9px] bg-white dark:bg-black", {
-            "bg-white/70 dark:bg-black/70": customBackgroundImage,
-          })}
+          className="rounded-full border-white/10 bg-neutral-900/45 px-[9px] text-white shadow-none backdrop-blur-md hover:bg-neutral-900/55 hover:text-white"
         >
           <LanguageIcon className="size-4" />
           <span className="sr-only">Change language</span>

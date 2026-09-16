@@ -20,6 +20,8 @@ type AssetSummaryWidgetProps = {
   servers: NezhaServer[]
 }
 
+export const ASSET_SUMMARY_OPEN_EVENT = "nezha:open-asset-summary"
+
 type BillingData = NonNullable<NonNullable<ReturnType<typeof parsePublicNote>>["billingDataMod"]>
 type FormattedServer = ReturnType<typeof formatNezhaInfo>
 type ExchangeRates = Record<string, number>
@@ -394,6 +396,12 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle")
   const { rates, status } = useExchangeRates(refreshKey)
 
+  useEffect(() => {
+    const openAssetSummary = () => setOpen(true)
+    window.addEventListener(ASSET_SUMMARY_OPEN_EVENT, openAssetSummary)
+    return () => window.removeEventListener(ASSET_SUMMARY_OPEN_EVENT, openAssetSummary)
+  }, [])
+
   const palette = useMemo(() => {
     const colorKey = resolveThemeColor((window as unknown as Record<string, unknown>).AssetCardColor)
     return ASSET_COLORS[colorKey]
@@ -470,7 +478,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
     )
     const premiumRateText = premiumRate === null ? "-" : `${premiumRate > 0 ? "+" : ""}${premiumRate.toFixed(2)}%`
     const markdown = [
-      "### 服务器交易信息",
+      "### 服务器信息",
       "",
       buildMarkdownTable([
         ["服务器 ID", String(tradeItem.id)],
@@ -482,6 +490,11 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
         ["已用流量", formatBytes(trafficUsed)],
         ["原价", tradeItem.sourcePriceText],
         ["到期时间", formatEndDate(tradeItem.billing?.endDate)],
+      ]),
+      "",
+      "### 交易信息",
+      "",
+      buildMarkdownTable([
         ["交易日期", tradeDate],
         ["交易币种", targetCurrency],
         ["交易金额", formatMoney(tradeAmountValue, targetCurrency)],
@@ -501,19 +514,6 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="打开资产统计"
-        className={cn(
-          "fixed right-5 top-[70px] z-[1041] flex size-11 items-center justify-center rounded-full border border-border bg-card/85 shadow-lg backdrop-blur-xl transition max-[576px]:right-4",
-          palette.triggerText,
-          open ? "pointer-events-none scale-0 opacity-0" : "scale-100 opacity-100 hover:scale-105",
-        )}
-        onClick={() => setOpen(true)}
-      >
-        <CircleDollarSign className="size-6" />
-      </button>
-
       <section
         className={cn(
           "fixed right-5 top-[70px] z-[1040] flex w-[280px] max-w-[calc(100vw-40px)] flex-col rounded-2xl border border-border bg-card/90 text-card-foreground shadow-2xl backdrop-blur-xl transition max-[576px]:right-5 max-[576px]:w-[calc(100vw-40px)]",

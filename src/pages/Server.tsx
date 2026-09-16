@@ -42,6 +42,7 @@ export default function Servers() {
   const themeSettings = window as unknown as Record<string, unknown>
   const showVisitorCapsule = themeSettings.ShowVisitorCapsule === true
   const showAssetCard = themeSettings.ShowAssetCard === true
+  const showGroupBar = themeSettings.ShowGroupBar !== false
 
   const restoreScrollPosition = () => {
     const savedPosition = sessionStorage.getItem("scrollPosition")
@@ -247,7 +248,8 @@ export default function Servers() {
       />
       {showVisitorCapsule && <VisitorCapsuleBar />}
       {showAssetCard && <AssetSummaryWidget now={nezhaWsData.now} servers={groupFilteredServers} />}
-      <div className="flex mt-6 items-center justify-between gap-2 server-overview-controls">
+      {showGroupBar && (
+        <div className="flex mt-6 items-center justify-between gap-2 server-overview-controls">
         <section className="flex items-center gap-2 w-full overflow-hidden">
           <button
             onClick={() => {
@@ -375,7 +377,8 @@ export default function Servers() {
             </div>
           </PopoverContent>
         </Popover>
-      </div>
+        </div>
+      )}
       {showMap === "1" && <GlobalMap now={nezhaWsData.now} serverList={nezhaWsData?.servers || []} />}
       {showServices === "1" && <ServiceTracker serverList={filteredServers} />}
       {inline === "1" && (
