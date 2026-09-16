@@ -1,9 +1,19 @@
 import { BackIcon } from "@/components/Icon"
 import ServerFlag from "@/components/ServerFlag"
+import TrafficBar from "@/components/TrafficBar"
 import { ServerDetailLoading } from "@/components/loading/ServerDetailLoading"
 import { useWebSocketContext } from "@/hooks/use-websocket-context"
 import { formatBytes } from "@/lib/format"
-import { cn, formatNezhaInfo } from "@/lib/utils"
+import {
+  calcTrafficUsed,
+  calculateRemainingBillingValue,
+  cn,
+  formatBillingAmount,
+  formatNezhaInfo,
+  normalizeBillingCurrency,
+  parseBillingAmountNumber,
+  parsePublicNote,
+} from "@/lib/utils"
 import { ReactNode, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -18,6 +28,15 @@ function formatSpeed(value: number) {
   if (value >= 1024) return `${(value / 1024).toFixed(2)} G/s`
   if (value >= 1) return `${value.toFixed(2)} M/s`
   return `${(value * 1024).toFixed(0)} K/s`
+}
+
+function formatExpiryDate(value: string, locale: string, indefiniteLabel: string, unknownLabel: string) {
+  if (!value) return unknownLabel
+  if (value.startsWith("0000-00-00")) return indefiniteLabel
+
+  const date = new Date(value)
+  if (!Number.isFinite(date.getTime())) return unknownLabel
+  return new Intl.DateTimeFormat(locale, { year: "numeric", month: "2-digit", day: "2-digit" }).format(date)
 }
 
 function DetailItem({ label, children, wide = false }: { label: ReactNode; children: ReactNode; wide?: boolean }) {
@@ -42,7 +61,7 @@ function LiveMetric({ label, value, detail }: { label: ReactNode; value: ReactNo
 }
 
 export default function ServerDetailOverview({ server_id }: { server_id: string }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { lastMessage, connected } = useWebSocketContext()
   const [hasHistory, setHasHistory] = useState(false)
@@ -57,6 +76,27 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
   if (!lastMessage || !server) return <ServerDetailLoading />
 
   const info = formatNezhaInfo(lastMessage.now, server)
+  const parsedData = parsePublicNote(info.public_note)
+  const billing = parsedData?.billingDataMod
+  const billingAmount = billing ? parseBillingAmountNumber(billing.amount) : null
+  const remainingBilling = billing && billingAmount !== null ? calculateRemainingBillingValue(billing, billingAmount) : null
+  const normalizedCurrency = normalizeBillingCurrency(billing?.currency)
+  const remainingValue =
+    billing?.amount === "-1"
+      ? t("billingInfo.free")
+      : remainingBilling
+        ? formatBillingAmount(remainingBilling.value.toFixed(normalizedCurrency === "JPY" ? 0 : 2), normalizedCurrency)
+        : t("serverDetail.unknown")
+  const expiryDate = formatExpiryDate(
+    billing?.endDate || info.expired_at,
+    i18n.resolvedLanguage || i18n.language,
+    t("billingInfo.indefinite"),
+    t("serverDetail.unknown"),
+  )
+  const trafficLimit = Number(info.traffic_limit) || 0
+  const trafficUsed = calcTrafficUsed(info.net_out_transfer, info.net_in_transfer, info.traffic_limit_type)
+  const showBillingSummary = Boolean(billing || info.expired_at)
+  const showTraffic = trafficLimit > 0
   const goBack = () => {
     if (hasHistory) navigate(-1)
     else navigate("/")
@@ -116,6 +156,28 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
         </div>
       </section>
 
+      {(showBillingSummary || showTraffic) && (
+        <section className="glass-card rounded-2xl border border-white/10 px-5 py-4 shadow-none backdrop-blur-md sm:px-6">
+          {showBillingSummary && (
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <DetailItem label={t("serverDetail.remainingValue")}>{remainingValue}</DetailItem>
+              <DetailItem label={t("serverDetail.expiryDate")}>{expiryDate}</DetailItem>
+            </div>
+          )}
+          {showTraffic && (
+            <div className={cn(showBillingSummary && "mt-4 border-t border-white/10 pt-4")}>
+              <p className="mb-2 text-[11px] leading-none text-white/55">{t("home.trafficUsage")}</p>
+              <TrafficBar
+                used={trafficUsed}
+                limit={trafficLimit}
+                resetDay={info.traffic_reset_day}
+                limitType={info.traffic_limit_type}
+              />
+            </div>
+          )}
+        </section>
+      )}
+
       <section className="glass-card grid grid-cols-2 overflow-hidden rounded-lg border border-white/10 backdrop-blur-md sm:grid-cols-3 lg:grid-cols-6">
         <LiveMetric label="CPU" value={`${info.cpu.toFixed(1)}%`} detail={`Load ${info.load_1}`} />
         <LiveMetric
@@ -128,9 +190,9 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
           value={`${info.disk.toFixed(1)}%`}
           detail={`${formatBytes(server.state.disk_used)} / ${formatBytes(info.disk_total)}`}
         />
-        <LiveMetric label={t("serverDetailChart.process")} value={info.process} detail="运行中进程" />
-        <LiveMetric label="实时流量" value={`↑ ${formatSpeed(info.up)}`} detail={`↓ ${formatSpeed(info.down)}`} />
-        <LiveMetric label="连接" value={`TCP ${info.tcp}`} detail={`UDP ${info.udp}`} />
+        <LiveMetric label={t("serverDetailChart.process")} value={info.process} detail={t("serverDetail.runningProcesses")} />
+        <LiveMetric label={t("serverDetail.liveTraffic")} value={`↑ ${formatSpeed(info.up)}`} detail={`↓ ${formatSpeed(info.down)}`} />
+        <LiveMetric label={t("serverDetail.connections")} value={`TCP ${info.tcp}`} detail={`UDP ${info.udp}`} />
       </section>
     </div>
   )

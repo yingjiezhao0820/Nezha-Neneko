@@ -115,7 +115,7 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
   if (!monitorData.success || monitors.length === 0) {
     return (
       <section className="glass-card flex min-h-40 items-center justify-center rounded-2xl border border-white/10 backdrop-blur-md">
-        <p className="text-sm font-medium text-white/60">{t("monitor.noData", "该服务器未配置延迟检测")}</p>
+        <p className="text-sm font-medium text-white/60">{t("monitor.noData", "No monitor data available")}</p>
       </section>
     )
   }
@@ -134,12 +134,14 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
               )}
               key={monitor.monitor_id}
               aria-pressed={isActive}
-              title={selectedMonitorIds === null ? `仅查看 ${monitor.monitor_name}` : isActive ? `取消选择 ${monitor.monitor_name}` : `增加 ${monitor.monitor_name}`}
+              title={`${t(selectedMonitorIds === null ? "monitor.viewOnly" : isActive ? "monitor.deselect" : "monitor.addSelection")} ${monitor.monitor_name}`}
               onClick={() => toggleMonitor(monitor.monitor_id)}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-xs text-white/75">{monitor.monitor_name}</span>
-                <span className="whitespace-nowrap text-[10px] text-white/45">丢包 {getLatestLoss(monitor).toFixed(2)}%</span>
+                <span className="whitespace-nowrap text-[10px] text-white/45">
+                  {t("monitor.packetLoss")} {getLatestLoss(monitor).toFixed(2)}%
+                </span>
               </div>
               <p className="mt-1 text-base font-semibold leading-none tabular-nums text-white">{getLatestDelay(monitor).toFixed(2)}ms</p>
             </button>

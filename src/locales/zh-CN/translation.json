@@ -71,7 +71,12 @@
     "download": "下载",
     "lastActive": "最后上报时间",
     "temperature": "温度",
-    "bootTime": "启动时间"
+    "bootTime": "启动时间",
+    "runningProcesses": "运行中进程",
+    "liveTraffic": "实时流量",
+    "connections": "连接",
+    "remainingValue": "剩余价值",
+    "expiryDate": "到期时间"
   },
   "serverDetailChart": {
     "process": "进程数",
@@ -112,7 +117,19 @@
     "avgDelay": "延迟",
     "monitorCount": "个监控服务",
     "packetLoss": "丢包率",
-    "clearSelections": "清除"
+    "clearSelections": "清除",
+    "viewOnly": "仅查看",
+    "deselect": "取消选择",
+    "addSelection": "增加"
+  },
+  "trafficBar": {
+    "reset": "流量重置",
+    "billing": "计费",
+    "typeMax": "较大值",
+    "typeMin": "较小值",
+    "typeUp": "单向（上行）",
+    "typeDown": "单向（下行）",
+    "typeSum": "双向"
   },
   "pwa": {
     "offlineReady": "应用可以离线使用了",

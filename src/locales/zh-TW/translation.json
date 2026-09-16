@@ -71,7 +71,12 @@
     "download": "下載",
     "lastActive": "最後上報時間",
     "temperature": "溫度",
-    "bootTime": "啟動時間"
+    "bootTime": "啟動時間",
+    "runningProcesses": "運行中進程",
+    "liveTraffic": "即時流量",
+    "connections": "連線",
+    "remainingValue": "剩餘價值",
+    "expiryDate": "到期時間"
   },
   "serverDetailChart": {
     "process": "進程數",
@@ -114,7 +119,10 @@
     "avgDelay": "延遲",
     "monitorCount": "個監控",
     "packetLoss": "丟包率",
-    "clearSelections": "清除"
+    "clearSelections": "清除",
+    "viewOnly": "僅查看",
+    "deselect": "取消選擇",
+    "addSelection": "增加"
   },
   "billingInfo": {
     "remaining": "剩餘天數",
@@ -134,6 +142,15 @@
   "ToggleDarkMode": "切換暗色模式",
   "ToggleSystemMode": "切換系統模式",
   "Home": "首頁",
+  "trafficBar": {
+    "reset": "流量重置",
+    "billing": "計費",
+    "typeMax": "較大值",
+    "typeMin": "較小值",
+    "typeUp": "單向（上行）",
+    "typeDown": "單向（下行）",
+    "typeSum": "雙向"
+  },
   "pwa": {
     "offlineReady": "可離線使用之應用程式",
     "newContent": "有新内容可用",

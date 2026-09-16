@@ -260,7 +260,7 @@ export function formatTime(timestamp: number): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-interface BillingData {
+export interface BillingData {
   startDate: string
   endDate: string
   autoRenewal: string
@@ -282,6 +282,114 @@ interface PlanData {
 export interface PublicNoteData {
   billingDataMod?: BillingData
   planDataMod?: PlanData
+}
+
+const BILLING_DAY_MS = 24 * 60 * 60 * 1000
+const BILLING_LONG_TERM_DAYS = 365 * 100
+
+function parseChineseBillingNumeral(word: string): number | null {
+  if (!word) return null
+  const map: Record<string, number> = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 }
+  if (Object.prototype.hasOwnProperty.call(map, word)) return map[word]
+
+  const tenIndex = word.indexOf("十")
+  if (tenIndex === -1) return null
+  const tens = tenIndex === 0 ? 1 : map[word[tenIndex - 1]]
+  const ones = tenIndex === word.length - 1 ? 0 : map[word[tenIndex + 1]]
+  if (tens == null || ones == null) return null
+  return tens * 10 + ones
+}
+
+export function parseBillingCycleDays(cycle?: string, startDate?: string, endDate?: string): number | null {
+  const raw = String(cycle || "").trim().toLowerCase()
+  const number = "([0-9]+(?:\\.[0-9]+)?)"
+
+  const dayMatch = raw.match(new RegExp(`^${number}\\s*(d|day|days|天)$`))
+  if (dayMatch) return Number(dayMatch[1])
+
+  const monthMatch = raw.match(new RegExp(`^${number}\\s*(m|mo|month|months|月)$`))
+  if (monthMatch) return Number(monthMatch[1]) * 30
+
+  const yearMatch = raw.match(new RegExp(`^${number}\\s*(y|yr|year|years|年)$`))
+  if (yearMatch) return Number(yearMatch[1]) * 365
+
+  const chineseYearMatch = raw.match(/^([零一二两三四五六七八九十]+)\s*年$/)
+  if (chineseYearMatch) {
+    const years = parseChineseBillingNumeral(chineseYearMatch[1])
+    if (years != null && years > 0) return years * 365
+  }
+
+  const chineseMonthMatch = raw.match(/^([零一二两三四五六七八九十]+)\s*个?\s*月$/)
+  if (chineseMonthMatch) {
+    const months = parseChineseBillingNumeral(chineseMonthMatch[1])
+    if (months != null && months > 0) return months * 30
+  }
+
+  const chineseDayMatch = raw.match(/^([零一二两三四五六七八九十]+)\s*天$/)
+  if (chineseDayMatch) {
+    const days = parseChineseBillingNumeral(chineseDayMatch[1])
+    if (days != null && days > 0) return days
+  }
+
+  if (raw.includes("半") || raw.includes("half") || raw.includes("semi")) return 184
+  if (raw.includes("季") || raw.includes("quarter") || raw === "q" || raw === "qr") return 92
+  if (raw.includes("年") || raw.includes("annual") || raw === "y" || raw === "yr") return 365
+  if (raw.includes("月") || raw.includes("month") || raw === "m" || raw === "mo") return 30
+  if (raw.includes("一次") || raw.includes("one-time")) return null
+
+  const start = Date.parse(startDate || "")
+  const end = Date.parse(endDate || "")
+  if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
+    const days = (end - start) / BILLING_DAY_MS
+    return days > 0 && days < 3660 ? days : null
+  }
+
+  return null
+}
+
+export function calculateRemainingBillingValue(billing: BillingData, amount: number, atDate = new Date()) {
+  if (amount <= 0) {
+    return { value: 0, days: 0, isExpired: false, isLongTerm: false }
+  }
+
+  const endDate = billing.endDate || ""
+  if (!endDate) {
+    return { value: amount, days: null, isExpired: false, isLongTerm: false }
+  }
+  if (endDate.startsWith("0000-00-00")) {
+    return { value: amount, days: null, isExpired: false, isLongTerm: true }
+  }
+
+  const atMs = atDate.getTime()
+  let endMs = Date.parse(endDate)
+  if (!Number.isFinite(endMs)) {
+    return { value: 0, days: null, isExpired: false, isLongTerm: false }
+  }
+
+  if ((endMs - atMs) / BILLING_DAY_MS > BILLING_LONG_TERM_DAYS) {
+    return { value: amount, days: null, isExpired: false, isLongTerm: true }
+  }
+
+  const cycleDays = parseBillingCycleDays(billing.cycle, billing.startDate, billing.endDate)
+  if (billing.autoRenewal === "1" && cycleDays && endMs < atMs) {
+    const cycleMs = cycleDays * BILLING_DAY_MS
+    endMs += Math.ceil((atMs - endMs) / cycleMs) * cycleMs
+  }
+
+  const daysLeft = (endMs - atMs) / BILLING_DAY_MS
+  if (daysLeft <= 0) {
+    return { value: 0, days: Math.floor(daysLeft), isExpired: true, isLongTerm: false }
+  }
+  if (!cycleDays) {
+    return { value: amount, days: Math.ceil(daysLeft), isExpired: false, isLongTerm: false }
+  }
+
+  return {
+    value: amount * Math.min(1, daysLeft / cycleDays),
+    days: Math.ceil(daysLeft),
+    isExpired: false,
+    isLongTerm: false,
+  }
 }
 
 // CNY \u663e\u793a\u98ce\u683c:\u00a5 \u89c6\u89c9\u7b80\u6d01,\u4f46\u4e0e JPY \u5171\u7528\u7b26\u53f7\u6709\u6b67\u4e49\u3002\u5f53\u90e8\u7f72\u91cc"\u7edd\u5927\u591a\u6570 CNY + \u5c11\u6570 JPY"

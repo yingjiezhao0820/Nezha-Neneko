@@ -1,5 +1,6 @@
 import { formatBytes } from "@/lib/format"
 import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 
 interface TrafficBarProps {
   used: number
@@ -14,8 +15,8 @@ function getMonthlyResetDate(now: Date, day: number): Date {
   return new Date(now.getFullYear(), now.getMonth(), Math.min(day, lastDay))
 }
 
-function calcResetDays(resetDay?: number): string {
-  if (!resetDay || resetDay < 1 || resetDay > 31) return "N/A"
+function calcResetDays(resetDay?: number): number | null {
+  if (!resetDay || resetDay < 1 || resetDay > 31) return null
 
   const now = new Date()
   let reset = getMonthlyResetDate(now, resetDay)
@@ -24,17 +25,7 @@ function calcResetDays(resetDay?: number): string {
     reset = getMonthlyResetDate(nextMonth, resetDay)
   }
 
-  return Math.ceil((reset.getTime() - now.getTime()) / 86400000) + "日"
-}
-
-function getTypeLabel(type: string): string {
-  switch (type) {
-    case "max": return "较大值"
-    case "min": return "较小值"
-    case "up": return "单向(上行)"
-    case "down": return "单向(下行)"
-    default: return "双向"
-  }
+  return Math.ceil((reset.getTime() - now.getTime()) / 86400000)
 }
 
 function getColor(percent: number): string {
@@ -42,6 +33,7 @@ function getColor(percent: number): string {
 }
 
 export default function TrafficBar({ used, limit, resetDay, limitType, compact = false }: TrafficBarProps) {
+  const { t } = useTranslation()
   const [infoIndex, setInfoIndex] = useState(0)
   const [fading, setFading] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -56,12 +48,22 @@ export default function TrafficBar({ used, limit, resetDay, limitType, compact =
   const usedFormatted = formatBytes(used)
   const limitFormatted = formatBytes(limit)
   const resetDays = calcResetDays(resetDay)
+  const limitTypeLabel =
+    limitType === "max"
+      ? t("trafficBar.typeMax")
+      : limitType === "min"
+        ? t("trafficBar.typeMin")
+        : limitType === "up"
+          ? t("trafficBar.typeUp")
+          : limitType === "down"
+            ? t("trafficBar.typeDown")
+            : t("trafficBar.typeSum")
 
   // 根据设置构建要显示的信息项
   const infoItems: string[] = []
   if (showPercent) infoItems.push(`${percentStr}%`)
-  if (showResetDay) infoItems.push(`流量重置: ${resetDays}`)
-  if (showBillingMode) infoItems.push(`计费: ${getTypeLabel(limitType)}`)
+  if (showResetDay) infoItems.push(`${t("trafficBar.reset")}: ${resetDays === null ? "N/A" : `${resetDays} ${t("billingInfo.days")}`}`)
+  if (showBillingMode) infoItems.push(`${t("trafficBar.billing")}: ${limitTypeLabel}`)
 
   const shouldCycle = !compact && infoItems.length > 1
 

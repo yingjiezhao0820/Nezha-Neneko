@@ -5,11 +5,13 @@ import { formatBytes } from "@/lib/format"
 import { ASSET_COLORS, resolveThemeColor } from "@/lib/theme-colors"
 import {
   calcTrafficUsed,
+  calculateRemainingBillingValue,
   cn,
   formatBillingAmount,
   formatNezhaInfo,
   normalizeBillingCurrency,
   parseBillingAmountNumber,
+  parseBillingCycleDays,
   parsePublicNote,
   resolveThemeBillingCurrency,
 } from "@/lib/utils"
@@ -47,8 +49,6 @@ type AssetItem = {
   sourcePriceText: string
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000
-const LONG_TERM_DAYS = 365 * 100
 const DISPLAY_CURRENCIES = ["CNY", "USD", "HKD", "EUR", "GBP", "JPY"] as const
 const DEFAULT_EXCHANGE_RATES: ExchangeRates = {
   CNY: 1,
@@ -110,111 +110,6 @@ function cnyToCurrency(amount: number | null, currency: string, rates: ExchangeR
   }
   const rate = rates[currency]
   return rate ? amount * rate : null
-}
-
-// 解析中文数字 1-99（覆盖 deriveCycleLabel 可能产出的"二年"/"五年" 等以及历史用户手填）
-function parseChineseNumeral(word: string): number | null {
-  if (!word) return null
-  const map: Record<string, number> = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 }
-  if (Object.prototype.hasOwnProperty.call(map, word)) return map[word]
-  // 处理 "十X"/"X十"/"X十Y" 这种合成
-  const idx = word.indexOf("十")
-  if (idx === -1) return null
-  const tens = idx === 0 ? 1 : map[word[idx - 1]]
-  const ones = idx === word.length - 1 ? 0 : map[word[idx + 1]]
-  if (tens == null || ones == null) return null
-  return tens * 10 + ones
-}
-
-function parseCycleDays(cycle?: string, startDate?: string, endDate?: string): number | null {
-  const raw = String(cycle || "").trim().toLowerCase()
-  const number = "([0-9]+(?:\\.[0-9]+)?)"
-
-  const dayMatch = raw.match(new RegExp(`^${number}\\s*(d|day|days|天)$`))
-  if (dayMatch) return Number(dayMatch[1])
-
-  const monthMatch = raw.match(new RegExp(`^${number}\\s*(m|mo|month|months|月)$`))
-  if (monthMatch) return Number(monthMatch[1]) * 30
-
-  const yearMatch = raw.match(new RegExp(`^${number}\\s*(y|yr|year|years|年)$`))
-  if (yearMatch) return Number(yearMatch[1]) * 365
-
-  // 中文数字 + 年/月/天（"五年" / "三个月" / "十天"）
-  const cnYearMatch = raw.match(/^([零一二两三四五六七八九十]+)\s*年$/)
-  if (cnYearMatch) {
-    const n = parseChineseNumeral(cnYearMatch[1])
-    if (n != null && n > 0) return n * 365
-  }
-  const cnMonthMatch = raw.match(/^([零一二两三四五六七八九十]+)\s*个?\s*月$/)
-  if (cnMonthMatch) {
-    const n = parseChineseNumeral(cnMonthMatch[1])
-    if (n != null && n > 0) return n * 30
-  }
-  const cnDayMatch = raw.match(/^([零一二两三四五六七八九十]+)\s*天$/)
-  if (cnDayMatch) {
-    const n = parseChineseNumeral(cnDayMatch[1])
-    if (n != null && n > 0) return n
-  }
-
-  if (raw.includes("半") || raw.includes("half") || raw.includes("semi")) return 184
-  if (raw.includes("季") || raw.includes("quarter") || raw === "q" || raw === "qr") return 92
-  if (raw.includes("年") || raw.includes("annual") || raw === "y" || raw === "yr") return 365
-  if (raw.includes("月") || raw.includes("month") || raw === "m" || raw === "mo") return 30
-  if (raw.includes("一次") || raw.includes("one-time")) return null
-
-  const start = Date.parse(startDate || "")
-  const end = Date.parse(endDate || "")
-  if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
-    const days = (end - start) / DAY_MS
-    return days > 0 && days < 3660 ? days : null
-  }
-
-  return null
-}
-
-function getRemainingSourceValue(billing: BillingData, amount: number, atDate = new Date()) {
-  if (amount <= 0) {
-    return { value: 0, days: 0, isExpired: false, isLongTerm: false }
-  }
-
-  const endDate = billing.endDate || ""
-  if (!endDate) {
-    return { value: amount, days: null, isExpired: false, isLongTerm: false }
-  }
-  if (endDate.startsWith("0000-00-00")) {
-    return { value: amount, days: null, isExpired: false, isLongTerm: true }
-  }
-
-  const atMs = atDate.getTime()
-  let endMs = Date.parse(endDate)
-  if (!Number.isFinite(endMs)) {
-    return { value: 0, days: null, isExpired: false, isLongTerm: false }
-  }
-
-  if ((endMs - atMs) / DAY_MS > LONG_TERM_DAYS) {
-    return { value: amount, days: null, isExpired: false, isLongTerm: true }
-  }
-
-  const cycleDays = parseCycleDays(billing.cycle, billing.startDate, billing.endDate)
-  if (billing.autoRenewal === "1" && cycleDays && endMs < atMs) {
-    const cycleMs = cycleDays * DAY_MS
-    endMs += Math.ceil((atMs - endMs) / cycleMs) * cycleMs
-  }
-
-  const daysLeft = (endMs - atMs) / DAY_MS
-  if (daysLeft <= 0) {
-    return { value: 0, days: Math.floor(daysLeft), isExpired: true, isLongTerm: false }
-  }
-  if (!cycleDays) {
-    return { value: amount, days: Math.ceil(daysLeft), isExpired: false, isLongTerm: false }
-  }
-
-  return {
-    value: amount * Math.min(1, daysLeft / cycleDays),
-    days: Math.ceil(daysLeft),
-    isExpired: false,
-    isLongTerm: false,
-  }
 }
 
 function getSourcePriceText(billing?: BillingData, currency?: string): string {
@@ -288,9 +183,9 @@ function buildAssetItem(now: number, server: NezhaServer, rates: ExchangeRates):
   const sourceAmount = billing ? parseBillingAmountNumber(billing.amount) : null
   const sourceCurrency = normalizeAssetCurrency(resolveThemeBillingCurrency(server, billing?.currency) || billing?.currency)
   const priceCny = sourceAmount !== null && sourceAmount > 0 ? amountToCny(sourceAmount, sourceCurrency, rates) : sourceAmount === 0 ? 0 : null
-  const cycleDays = billing ? parseCycleDays(billing.cycle, billing.startDate, billing.endDate) : null
+  const cycleDays = billing ? parseBillingCycleDays(billing.cycle, billing.startDate, billing.endDate) : null
   const monthlyCny = priceCny !== null && cycleDays ? priceCny / (cycleDays / 30) : null
-  const remaining = billing && sourceAmount !== null ? getRemainingSourceValue(billing, sourceAmount) : null
+  const remaining = billing && sourceAmount !== null ? calculateRemainingBillingValue(billing, sourceAmount) : null
   const remainingCny = remaining && sourceCurrency ? amountToCny(remaining.value, sourceCurrency, rates) : null
   const extra = parsed?.planDataMod?.extra || ""
 
@@ -441,7 +336,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
     }
 
     const asOf = new Date(`${tradeDate}T00:00:00`)
-    const remaining = getRemainingSourceValue(tradeItem.billing, tradeItem.sourceAmount, asOf)
+    const remaining = calculateRemainingBillingValue(tradeItem.billing, tradeItem.sourceAmount, asOf)
     return amountToCny(remaining.value, tradeItem.sourceCurrency, rates)
   }, [rates, tradeDate, tradeItem])
 

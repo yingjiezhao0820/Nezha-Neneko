@@ -33,7 +33,7 @@
     "hours": "Hours",
     "upload": "Upload",
     "download": "Download",
-    "networkSpeed": "Net speed",
+    "networkSpeed": "Net Speed",
     "trafficUsage": "Traffic",
     "system": "System",
     "uptime": "Uptime",
@@ -71,7 +71,12 @@
     "download": "Download",
     "lastActive": "Last active time",
     "temperature": "Temperature",
-    "bootTime": "Boot time"
+    "bootTime": "Boot time",
+    "runningProcesses": "Running processes",
+    "liveTraffic": "Live traffic",
+    "connections": "Connections",
+    "remainingValue": "Remaining Value",
+    "expiryDate": "Expiry Date"
   },
   "serverDetailChart": {
     "process": "Process",
@@ -111,7 +116,19 @@
     "avgDelay": "Latency",
     "monitorCount": "Services",
     "packetLoss": "Packet Loss",
-    "clearSelections": "Clear"
+    "clearSelections": "Clear",
+    "viewOnly": "View only",
+    "deselect": "Deselect",
+    "addSelection": "Add"
+  },
+  "trafficBar": {
+    "reset": "Reset",
+    "billing": "Billing",
+    "typeMax": "Greater direction",
+    "typeMin": "Lower direction",
+    "typeUp": "Upload only",
+    "typeDown": "Download only",
+    "typeSum": "Upload + Download"
   },
   "pwa": {
     "offlineReady": "App ready to work offline",
