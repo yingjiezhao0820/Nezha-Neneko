@@ -51,13 +51,21 @@ function getLatestDelay(monitor: NezhaMonitor) {
   return 0
 }
 
-function getLatestLoss(monitor: NezhaMonitor) {
+function getAverageLoss(monitor: NezhaMonitor) {
   const values = monitor.packet_loss || []
-  for (let index = values.length - 1; index >= 0; index -= 1) {
-    const value = values[index]
-    if (Number.isFinite(value)) return value
-  }
-  return 0
+  let weightedLoss = 0
+  let totalSamples = 0
+
+  values.forEach((value, index) => {
+    if (!Number.isFinite(value)) return
+
+    const sampleCount = Number(monitor.sample_count?.[index])
+    const weight = Number.isFinite(sampleCount) && sampleCount > 0 ? sampleCount : 1
+    weightedLoss += value * weight
+    totalSamples += weight
+  })
+
+  return totalSamples > 0 ? weightedLoss / totalSamples : 0
 }
 
 function getPacketLossColor(packetLoss: number): string {
@@ -134,7 +142,7 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         {monitors.map((monitor) => {
           const isActive = selectedMonitorIds === null || selectedMonitorIds.has(monitor.monitor_id)
-          const latestLoss = getLatestLoss(monitor)
+          const averageLoss = getAverageLoss(monitor)
           return (
             <button
               type="button"
@@ -149,8 +157,8 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-xs text-white/75">{monitor.monitor_name}</span>
-                <span className={cn("whitespace-nowrap text-[10px]", getPacketLossColor(latestLoss))}>
-                  {t("monitor.packetLoss")} {latestLoss.toFixed(2)}%
+                <span className={cn("whitespace-nowrap text-[10px]", getPacketLossColor(averageLoss))}>
+                  {t("monitor.packetLoss")} {averageLoss.toFixed(2)}%
                 </span>
               </div>
               <p className="mt-1 text-base font-semibold leading-none tabular-nums text-white">{getLatestDelay(monitor).toFixed(2)}ms</p>
