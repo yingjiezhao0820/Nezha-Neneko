@@ -103,6 +103,7 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
       }, {} as ChartConfig),
     [monitorColors, visibleMonitors],
   )
+  const tooltipColumnCount = Math.max(1, Math.ceil(visibleMonitors.length / 12))
   const toggleMonitor = (monitorId: number) => {
     setSelectedMonitorIds((current) => {
       if (current === null) return new Set([monitorId])
@@ -190,8 +191,8 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
                   className="max-h-[min(70vh,32rem)] max-w-[92vw] overflow-auto overscroll-contain"
                   contentClassName="w-max"
                   contentStyle={{
-                    gridAutoColumns: "minmax(8rem, 1fr)",
                     gridAutoFlow: "column",
+                    gridTemplateColumns: `repeat(${tooltipColumnCount}, minmax(8rem, max-content))`,
                     gridTemplateRows: `repeat(${Math.min(12, visibleMonitors.length)}, minmax(0, auto))`,
                     columnGap: "1.25rem",
                   }}
