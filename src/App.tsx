@@ -3,12 +3,14 @@ import React, { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Route, BrowserRouter as Router, Routes, useLocation } from "react-router-dom"
 
+import AssetSummaryWidget from "./components/AssetSummaryWidget"
 import { DashCommand } from "./components/DashCommand"
 import ErrorBoundary from "./components/ErrorBoundary"
 import Header, { RefreshToast } from "./components/Header"
 import PrivateAccessGate from "./components/PrivateAccessGate"
 import { useBackground } from "./hooks/use-background"
 import { useTheme } from "./hooks/use-theme"
+import { useWebSocketContext } from "./hooks/use-websocket-context"
 import { InjectContext } from "./lib/inject"
 import { fetchSetting } from "./lib/nezha-api"
 import { cn } from "./lib/utils"
@@ -33,6 +35,7 @@ const MainApp: React.FC = () => {
   const { setTheme } = useTheme()
   const [isCustomCodeInjected, setIsCustomCodeInjected] = useState(false)
   const { backgroundImage: customBackgroundImage } = useBackground()
+  const { lastMessage } = useWebSocketContext()
   const { pathname } = useLocation()
   const isServerDetail = /^\/server\/[^/]+\/?$/.test(pathname)
 
@@ -75,6 +78,7 @@ const MainApp: React.FC = () => {
   }
 
   const customMobileBackgroundImage = window.CustomMobileBackgroundImage !== "" ? window.CustomMobileBackgroundImage : undefined
+  const showAssetCard = (window as unknown as Record<string, unknown>).ShowAssetCard === true
 
   return (
     <ErrorBoundary>
@@ -93,7 +97,6 @@ const MainApp: React.FC = () => {
           style={{ backgroundImage: `url(${customMobileBackgroundImage})` }}
         />
       )}
-      {isServerDetail && <div className="pointer-events-none fixed inset-0 z-10 bg-slate-200/35 dark:bg-black/20" />}
       <div
         className={cn("flex min-h-screen w-full flex-col", {
           "bg-background": !customBackgroundImage,
@@ -105,7 +108,8 @@ const MainApp: React.FC = () => {
           })}
         >
           <RefreshToast />
-          {!isServerDetail && <Header />}
+          <Header showClock={!isServerDetail} />
+          {showAssetCard && lastMessage && <AssetSummaryWidget now={lastMessage.now} servers={lastMessage.servers} />}
           <DashCommand />
           <Routes>
             <Route path="/" element={<Server />} />

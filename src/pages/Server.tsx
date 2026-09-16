@@ -1,4 +1,3 @@
-import AssetSummaryWidget from "@/components/AssetSummaryWidget"
 import GlobalMap from "@/components/GlobalMap"
 import GroupSwitch from "@/components/GroupSwitch"
 import ServerCard from "@/components/ServerCard"
@@ -41,7 +40,6 @@ export default function Servers() {
   const customBackgroundImage = (window.CustomBackgroundImage as string) !== "" ? window.CustomBackgroundImage : undefined
   const themeSettings = window as unknown as Record<string, unknown>
   const showVisitorCapsule = themeSettings.ShowVisitorCapsule === true
-  const showAssetCard = themeSettings.ShowAssetCard === true
   const showGroupBar = themeSettings.ShowGroupBar !== false
 
   const restoreScrollPosition = () => {
@@ -117,7 +115,6 @@ export default function Servers() {
   ]
 
   const {
-    groupFilteredServers,
     filteredServers,
     totalServers,
     onlineServers,
@@ -129,7 +126,6 @@ export default function Servers() {
   } = useMemo(() => {
     if (!nezhaWsData) {
       return {
-        groupFilteredServers: [],
         filteredServers: [],
         totalServers: 0,
         onlineServers: 0,
@@ -210,7 +206,6 @@ export default function Servers() {
     })
 
     return {
-      groupFilteredServers: rows.map(({ server }) => server),
       filteredServers: visibleRows.map(({ server }) => server),
       totalServers: rows.length,
       ...summary,
@@ -247,7 +242,6 @@ export default function Servers() {
         downSpeed={downSpeed}
       />
       {showVisitorCapsule && <VisitorCapsuleBar />}
-      {showAssetCard && <AssetSummaryWidget now={nezhaWsData.now} servers={groupFilteredServers} />}
       {showGroupBar && (
         <div className="flex mt-6 items-center justify-between gap-2 server-overview-controls">
         <section className="flex items-center gap-2 w-full overflow-hidden">

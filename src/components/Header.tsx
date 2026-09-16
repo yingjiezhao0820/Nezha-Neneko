@@ -15,7 +15,11 @@ import { LanguageSwitcher } from "./LanguageSwitcher"
 import { LoadingSpinner } from "./loading/Loader"
 import { Button } from "./ui/button"
 
-function Header() {
+type HeaderProps = {
+  showClock?: boolean
+}
+
+function Header({ showClock = true }: HeaderProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
@@ -111,7 +115,7 @@ function Header() {
         <DashboardLink />
         <Links />
       </div>
-      <Overview />
+      {showClock && <Overview />}
     </div>
   )
 }

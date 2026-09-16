@@ -68,7 +68,6 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
         <button type="button" onClick={goBack} className="flex items-center gap-1.5 text-left">
           <BackIcon />
           <h1 className="max-w-[70vw] truncate text-xl font-semibold tracking-tight text-white">{info.name}</h1>
-          <span className="ml-2 text-base text-white/45">·</span>
         </button>
 
         <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">

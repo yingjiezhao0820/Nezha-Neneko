@@ -250,7 +250,10 @@ function escapeMarkdownCell(value: string): string {
 }
 
 function buildMarkdownTable(rows: Array<[string, string]>): string {
-  return ["| 项目 | 信息 |", "| --- | --- |", ...rows.map(([label, value]) => `| ${escapeMarkdownCell(label)} | ${escapeMarkdownCell(value)} |`)].join("\n")
+  const headers = rows.map(([label]) => escapeMarkdownCell(label))
+  const values = rows.map(([, value]) => escapeMarkdownCell(value))
+
+  return [`| ${headers.join(" | ")} |`, `| ${rows.map(() => "---").join(" | ")} |`, `| ${values.join(" | ")} |`].join("\n")
 }
 
 async function copyTextToClipboard(text: string): Promise<void> {
@@ -481,7 +484,6 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
       "### 服务器信息",
       "",
       buildMarkdownTable([
-        ["服务器 ID", String(tradeItem.id)],
         ["名称", tradeItem.name],
         ["CPU", `${tradeItem.formatted.cpu.toFixed(2)}%`],
         ["内存", formatBytes(tradeItem.formatted.mem_total)],
