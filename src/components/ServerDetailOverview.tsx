@@ -1,4 +1,5 @@
 import { BackIcon } from "@/components/Icon"
+import { buildMarkdownTable, copyTextToClipboard } from "@/lib/clipboard"
 import ServerFlag from "@/components/ServerFlag"
 import TrafficBar from "@/components/TrafficBar"
 import { ServerDetailLoading } from "@/components/loading/ServerDetailLoading"
@@ -9,11 +10,13 @@ import {
   calculateRemainingBillingValue,
   cn,
   formatBillingAmount,
+  formatBillingCycle,
   formatNezhaInfo,
   normalizeBillingCurrency,
   parseBillingAmountNumber,
   parsePublicNote,
 } from "@/lib/utils"
+import { Check, Copy } from "lucide-react"
 import { ReactNode, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -39,9 +42,9 @@ function formatExpiryDate(value: string, locale: string, indefiniteLabel: string
   return new Intl.DateTimeFormat(locale, { year: "numeric", month: "2-digit", day: "2-digit" }).format(date)
 }
 
-function DetailItem({ label, children, wide = false }: { label: ReactNode; children: ReactNode; wide?: boolean }) {
+function DetailItem({ label, children, className }: { label: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <div className={cn("min-w-0", wide && "sm:col-span-2 lg:col-span-3")}>
+    <div className={cn("min-w-0", className)}>
       <p className="text-[11px] leading-none text-white/55">{label}</p>
       <div className="mt-1 truncate text-xs font-medium leading-5 text-white">{children}</div>
     </div>
@@ -65,6 +68,7 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
   const navigate = useNavigate()
   const { lastMessage, connected } = useWebSocketContext()
   const [hasHistory, setHasHistory] = useState(false)
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle")
 
   useEffect(() => {
     setHasHistory(sessionStorage.getItem("fromMainPage") === "true")
@@ -79,14 +83,28 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
   const parsedData = parsePublicNote(info.public_note)
   const billing = parsedData?.billingDataMod
   const billingAmount = billing ? parseBillingAmountNumber(billing.amount) : null
-  const remainingBilling = billing && billingAmount !== null ? calculateRemainingBillingValue(billing, billingAmount) : null
+  const remainingBilling = billing ? calculateRemainingBillingValue(billing, billingAmount ?? 1) : null
   const normalizedCurrency = normalizeBillingCurrency(billing?.currency)
+  const billingCycle = formatBillingCycle(billing?.cycle, i18n.resolvedLanguage || i18n.language)
+  const billingPrice =
+    billing?.amount === "-1"
+      ? t("billingInfo.free")
+      : billingAmount !== null
+        ? `${formatBillingAmount(billing?.amount || "", normalizedCurrency)}${billingCycle ? `/${billingCycle}` : ""}`
+        : t("serverDetail.unknown")
   const remainingValue =
     billing?.amount === "-1"
       ? t("billingInfo.free")
-      : remainingBilling
+      : remainingBilling && billingAmount !== null
         ? formatBillingAmount(remainingBilling.value.toFixed(normalizedCurrency === "JPY" ? 0 : 2), normalizedCurrency)
         : t("serverDetail.unknown")
+  const remainingDays = !remainingBilling
+    ? t("serverDetail.unknown")
+    : remainingBilling.isExpired
+      ? t("billingInfo.expired")
+      : remainingBilling.isLongTerm || remainingBilling.days === null
+        ? t("billingInfo.indefinite")
+        : `${Math.max(0, remainingBilling.days)} ${t("billingInfo.days")}`
   const expiryDate = formatExpiryDate(
     billing?.endDate || info.expired_at,
     i18n.resolvedLanguage || i18n.language,
@@ -97,9 +115,32 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
   const trafficUsed = calcTrafficUsed(info.net_out_transfer, info.net_in_transfer, info.traffic_limit_type)
   const showBillingSummary = Boolean(billing || info.expired_at)
   const showTraffic = trafficLimit > 0
+  const showDetailAssets = (window as unknown as Record<string, unknown>).ShowServerDetailAssets === true
   const goBack = () => {
     if (hasHistory) navigate(-1)
     else navigate("/")
+  }
+  const handleCopyAssetMarkdown = async () => {
+    const markdown = [
+      `### ${t("serverDetail.assetInfo")}`,
+      "",
+      buildMarkdownTable([
+        [t("serverDetail.serverName"), info.name],
+        [t("billingInfo.price"), billingPrice],
+        [t("serverDetail.remainingValue"), remainingValue],
+        [t("serverDetail.remainingDays"), remainingDays],
+        [t("serverDetail.expiryDate"), expiryDate],
+        [t("serverDetail.trafficUsed"), formatBytes(trafficUsed)],
+        [t("serverDetail.trafficLimit"), showTraffic ? formatBytes(trafficLimit) : t("serverDetail.unlimited")],
+      ]),
+    ].join("\n")
+
+    try {
+      await copyTextToClipboard(markdown)
+      setCopyStatus("copied")
+    } catch {
+      setCopyStatus("error")
+    }
   }
 
   return (
@@ -110,8 +151,8 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
           <h1 className="max-w-[70vw] truncate text-xl font-semibold tracking-tight text-white">{info.name}</h1>
         </button>
 
-        <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
-          <DetailItem label={t("serverDetail.status")}>
+        <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-6">
+          <DetailItem className="bg-black/[0.08] px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.status")}>
             <span
               className={cn(
                 "inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white",
@@ -121,52 +162,71 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
               {info.online ? t("serverDetail.online") : t("serverDetail.offline")}
             </span>
           </DetailItem>
-          <DetailItem label={t("serverDetail.uptime")}>
+          <DetailItem className="bg-black/[0.08] px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.uptime")}>
             {formatUptime(info.uptime, t("serverDetail.days"), t("serverDetail.hours"))}
           </DetailItem>
-          <DetailItem label={t("serverDetail.arch")}>{info.arch || t("serverDetail.unknown")}</DetailItem>
-          <DetailItem label={t("serverDetail.mem")}>{info.mem_total ? formatBytes(info.mem_total) : t("serverDetail.unknown")}</DetailItem>
-          <DetailItem label={t("serverDetail.disk")}>{info.disk_total ? formatBytes(info.disk_total) : t("serverDetail.unknown")}</DetailItem>
-          <DetailItem label={t("serverDetail.region")}>
+          <DetailItem className="bg-black/[0.08] px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.arch")}>
+            {info.arch || t("serverDetail.unknown")}
+          </DetailItem>
+          <DetailItem className="bg-black/[0.08] px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.mem")}>
+            {info.mem_total ? formatBytes(info.mem_total) : t("serverDetail.unknown")}
+          </DetailItem>
+          <DetailItem className="bg-black/[0.08] px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.disk")}>
+            {info.disk_total ? formatBytes(info.disk_total) : t("serverDetail.unknown")}
+          </DetailItem>
+          <DetailItem className="bg-black/[0.08] px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.region")}>
             <span className="inline-flex items-center gap-1.5">
               {info.country_code?.toUpperCase() || t("serverDetail.unknown")}
               {info.country_code ? <ServerFlag country_code={info.country_code} /> : null}
             </span>
           </DetailItem>
-        </div>
-
-        <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-5">
-          <DetailItem label={t("serverDetail.system")} wide>
+          <DetailItem className="col-span-2 bg-black/[0.08] px-4 py-3 sm:col-span-3" label={t("serverDetail.system")}>
             {[info.platform, info.platform_version].filter(Boolean).join(" · ") || t("serverDetail.unknown")}
           </DetailItem>
-          <div className="min-w-0 sm:col-span-2">
-            <p className="text-[11px] leading-none text-white/55">CPU</p>
-            <p className="mt-1 truncate text-xs font-medium leading-5 text-white">
-              {info.cpu_info.filter(Boolean).join(", ") || t("serverDetail.unknown")}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-3 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-3">
-          <DetailItem label="Load">
+          <DetailItem className="col-span-2 bg-black/[0.08] px-4 py-3 sm:col-span-3" label="CPU">
+            {info.cpu_info.filter(Boolean).join(", ") || t("serverDetail.unknown")}
+          </DetailItem>
+          <DetailItem className="col-span-2 bg-black/[0.08] px-4 py-3" label="Load">
             {info.load_1} / {info.load_5} / {info.load_15}
           </DetailItem>
-          <DetailItem label={t("serverDetail.upload")}>{formatBytes(info.net_out_transfer)}</DetailItem>
-          <DetailItem label={t("serverDetail.download")}>{formatBytes(info.net_in_transfer)}</DetailItem>
+          <DetailItem className="col-span-2 bg-black/[0.08] px-4 py-3" label={t("serverDetail.upload")}>
+            {formatBytes(info.net_out_transfer)}
+          </DetailItem>
+          <DetailItem className="col-span-2 bg-black/[0.08] px-4 py-3" label={t("serverDetail.download")}>
+            {formatBytes(info.net_in_transfer)}
+          </DetailItem>
         </div>
       </section>
 
-      {(showBillingSummary || showTraffic) && (
+      {showDetailAssets && (showBillingSummary || showTraffic) && (
         <section className="glass-card rounded-2xl border border-white/10 px-5 py-4 shadow-none backdrop-blur-md sm:px-6">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-white">{t("serverDetail.assetInfo")}</p>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.06] px-2.5 py-1.5 text-[10px] font-medium text-white/75 transition hover:bg-white/[0.12] hover:text-white"
+              onClick={handleCopyAssetMarkdown}
+              title={t("serverDetail.copyMarkdown")}
+            >
+              {copyStatus === "copied" ? <Check className="size-3" /> : <Copy className="size-3" />}
+              {copyStatus === "copied"
+                ? t("serverDetail.copied")
+                : copyStatus === "error"
+                  ? t("serverDetail.copyFailed")
+                  : t("serverDetail.copyMarkdown")}
+            </button>
+          </div>
           {showBillingSummary && (
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-4 lg:grid-cols-4">
+              <DetailItem label={t("billingInfo.price")}>{billingPrice}</DetailItem>
               <DetailItem label={t("serverDetail.remainingValue")}>{remainingValue}</DetailItem>
+              <DetailItem label={t("serverDetail.remainingDays")}>{remainingDays}</DetailItem>
               <DetailItem label={t("serverDetail.expiryDate")}>{expiryDate}</DetailItem>
             </div>
           )}
           {showTraffic && (
             <div className={cn(showBillingSummary && "mt-4 border-t border-white/10 pt-4")}>
-              <p className="mb-2 text-[11px] leading-none text-white/55">{t("home.trafficUsage")}</p>
+              <p className="mb-2 text-[11px] leading-none text-white/55">{t("serverCard.trafficUsage")}</p>
               <TrafficBar
                 used={trafficUsed}
                 limit={trafficLimit}

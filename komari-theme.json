@@ -139,6 +139,13 @@
                 "help": "开启后显示右上角资产统计浮窗，账单金额会使用默认货币和服务器货币覆盖配置。"
             },
             {
+                "key": "ShowServerDetailAssets",
+                "name": "显示详情资产信息",
+                "type": "switch",
+                "default": false,
+                "help": "开启后在服务器详情页显示资费、剩余价值、剩余天数、到期时间、流量进度及 Markdown 复制按钮。"
+            },
+            {
                 "key": "AssetCardColor",
                 "name": "资产卡片颜色",
                 "type": "select",

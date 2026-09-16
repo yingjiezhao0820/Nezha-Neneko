@@ -76,7 +76,16 @@
     "liveTraffic": "即時流量",
     "connections": "連線",
     "remainingValue": "剩餘價值",
-    "expiryDate": "到期時間"
+    "remainingDays": "剩餘天數",
+    "expiryDate": "到期時間",
+    "assetInfo": "資產與流量",
+    "serverName": "伺服器",
+    "copyMarkdown": "複製 Markdown",
+    "copied": "已複製",
+    "copyFailed": "複製失敗",
+    "trafficUsed": "已用流量",
+    "trafficLimit": "流量額度",
+    "unlimited": "無限制"
   },
   "serverDetailChart": {
     "process": "進程數",

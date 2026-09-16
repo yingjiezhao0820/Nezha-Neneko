@@ -76,7 +76,16 @@
     "liveTraffic": "Live traffic",
     "connections": "Connections",
     "remainingValue": "Remaining Value",
-    "expiryDate": "Expiry Date"
+    "remainingDays": "Remaining Days",
+    "expiryDate": "Expiry Date",
+    "assetInfo": "Asset & Traffic",
+    "serverName": "Server",
+    "copyMarkdown": "Copy Markdown",
+    "copied": "Copied",
+    "copyFailed": "Copy Failed",
+    "trafficUsed": "Traffic Used",
+    "trafficLimit": "Traffic Limit",
+    "unlimited": "Unlimited"
   },
   "serverDetailChart": {
     "process": "Process",
