@@ -1,10 +1,10 @@
 {
-    "name": "nezha-BITJEBE",
-    "short": "nezha-BITJEBE",
+    "name": "nezha-BITJEBE-fix",
+    "short": "nezha-BITJEBE-fix",
     "description": "nezha-BITJEBE Theme for Komari Monitor",
-    "version": "1.1.7",
+    "version": "1.1.7.1",
     "author": "BITJEBE",
-    "url": "https://github.com/BITJEBE/nezha-BITJEBE",
+    "url": "https://github.com/yingjiezhao0820/nezha-BITJEBE/",
     "preview": "preview.png",
     "configuration": {
         "type": "managed",

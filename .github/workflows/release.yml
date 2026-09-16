@@ -1,91 +1,157 @@
-name: Release Theme Package
+name: Build and Release Theme
 
 on:
+  push:
+    tags:
+      - "v*"
+      - "[0-9]*"
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v1.1.8"
+        required: true
+        type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: theme-release-${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   build-and-release:
+    name: Build, validate and publish theme package
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: npm
 
       - name: Install dependencies
-        run: npm i
+        run: npm ci
+
+      - name: Resolve release metadata
+        id: meta
+        env:
+          RAW_TAG: ${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${RAW_TAG}" ]]; then
+            echo "Release tag is empty"
+            exit 1
+          fi
+
+          if [[ ! "${RAW_TAG}" =~ ^v?[0-9][0-9A-Za-z._-]*$ ]]; then
+            echo "Unsupported release tag: ${RAW_TAG}"
+            echo "Use a version tag such as v1.1.8"
+            exit 1
+          fi
+
+          CLEAN_VERSION="${RAW_TAG#v}"
+          ZIP_NAME="nezha-BITJEBE-${RAW_TAG}.zip"
+
+          echo "release_tag=${RAW_TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${CLEAN_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "zip_name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp theme version
+        env:
+          THEME_VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          jq --arg version "$THEME_VERSION" '.version = $version' \
+            komari-theme.json > komari-theme.updated.json
+          mv komari-theme.updated.json komari-theme.json
+          jq '{name, short, version, preview}' komari-theme.json
 
       - name: Build project
         run: npm run build
 
-      - name: Update theme configuration
-        env:
-          RELEASE_VERSION: ${{ github.event.release.tag_name }}
-        run: |
-          # Get current date in YY.MM.DD format
-          VERSION_DATE=$(date +"%y.%m.%d")
-          # Get commit hash (short)
-          COMMIT_HASH=$(git rev-parse --short HEAD)
-
-          echo "VERSION_DATE=${VERSION_DATE}" >> $GITHUB_ENV
-          echo "COMMIT_HASH=${COMMIT_HASH}" >> $GITHUB_ENV
-          echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
-
-          # Write release version (tag) to komari-theme.json, strip leading 'v' prefix
-          CLEAN_VERSION="${RELEASE_VERSION#v}"
-          jq --arg version "$CLEAN_VERSION" \
-             '.version = $version' \
-             komari-theme.json > komari-theme-updated.json
-
-          mv komari-theme-updated.json komari-theme.json
-
-          echo "Updated theme configuration:"
-          cat komari-theme.json
-
-      - name: Verify required files exist
-        run: |
-          echo "Checking required files..."
-          ls -la preview.png || (echo "preview.png not found" && exit 1)
-          ls -la komari-theme.json || (echo "komari-theme.json not found" && exit 1)
-          ls -la dist/ || (echo "dist/ directory not found" && exit 1)
-          echo "All required files found!"
-
-      - name: Create theme package
+      - name: Assemble theme package
         id: package
+        env:
+          ZIP_NAME: ${{ steps.meta.outputs.zip_name }}
+        shell: bash
         run: |
-          # Create a temporary directory for the package
-          mkdir -p theme-package
+          set -euo pipefail
 
-          # Copy required files
-          cp preview.png theme-package/
-          cp komari-theme.json theme-package/
-          cp -r dist/ theme-package/
+          test -f komari-theme.json
+          test -f preview.png
+          test -f dist/index.html
 
-          # Create zip file with fixed prefix and release tag, e.g., nezha-dash-theme-v1.0.0.zip
-          ZIP_NAME="nezha-dash-theme-${RELEASE_VERSION}.zip"
+          PACKAGE_DIR="$RUNNER_TEMP/nezha-theme-package"
+          rm -rf "$PACKAGE_DIR"
+          mkdir -p "$PACKAGE_DIR"
 
-          cd theme-package
-          zip -r ../${ZIP_NAME} .
-          cd ..
+          cp komari-theme.json "$PACKAGE_DIR/"
+          cp preview.png "$PACKAGE_DIR/"
+          cp -R dist "$PACKAGE_DIR/dist"
 
-          # Expose as step output for later steps
-          echo "zip_name=${ZIP_NAME}" >> $GITHUB_OUTPUT
-          echo "Created package: ${ZIP_NAME}"
-          ls -la ${ZIP_NAME}
+          (cd "$PACKAGE_DIR" && zip -qr "$GITHUB_WORKSPACE/$ZIP_NAME" .)
+          echo "package_path=$GITHUB_WORKSPACE/$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          ls -lh "$GITHUB_WORKSPACE/$ZIP_NAME"
 
-      - name: Upload Release Asset
+      - name: Validate theme archive
+        env:
+          ZIP_NAME: ${{ steps.meta.outputs.zip_name }}
+          EXPECTED_VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import re
+          import sys
+          import zipfile
+          from pathlib import Path
+
+          archive = Path("${{ steps.meta.outputs.zip_name }}")
+          required = {"komari-theme.json", "preview.png", "dist/index.html"}
+
+          with zipfile.ZipFile(archive) as package:
+              names = set(package.namelist())
+              missing = sorted(required - names)
+              if missing:
+                  sys.exit(f"Theme package is missing: {', '.join(missing)}")
+
+              manifest = json.loads(package.read("komari-theme.json"))
+              if not manifest.get("name") or not manifest.get("short"):
+                  sys.exit("komari-theme.json must contain non-empty name and short")
+              if not re.fullmatch(r"[A-Za-z0-9_-]+", manifest["short"]):
+                  sys.exit("Theme short may only contain letters, numbers, underscores and hyphens")
+              if manifest.get("version") != "${{ steps.meta.outputs.version }}":
+                  sys.exit("Theme version does not match release tag")
+
+          print(f"Validated {archive}: {archive.stat().st_size} bytes")
+          PY
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nezha-BITJEBE-${{ steps.meta.outputs.release_tag }}
+          path: ${{ steps.package.outputs.package_path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.package.outputs.zip_name }}
+          tag_name: ${{ steps.meta.outputs.release_tag }}
+          name: nezha-BITJEBE ${{ steps.meta.outputs.release_tag }}
+          generate_release_notes: true
+          make_latest: true
+          files: ${{ steps.package.outputs.package_path }}
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
