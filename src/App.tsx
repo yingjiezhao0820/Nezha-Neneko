@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import React, { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom"
+import { Route, BrowserRouter as Router, Routes, useLocation } from "react-router-dom"
 
 import { DashCommand } from "./components/DashCommand"
 import ErrorBoundary from "./components/ErrorBoundary"
@@ -34,6 +34,8 @@ const MainApp: React.FC = () => {
   const { setTheme } = useTheme()
   const [isCustomCodeInjected, setIsCustomCodeInjected] = useState(false)
   const { backgroundImage: customBackgroundImage } = useBackground()
+  const { pathname } = useLocation()
+  const isServerDetail = /^\/server\/[^/]+\/?$/.test(pathname)
 
   useEffect(() => {
     if (settingData?.data?.config?.custom_code) {
@@ -92,14 +94,19 @@ const MainApp: React.FC = () => {
           style={{ backgroundImage: `url(${customMobileBackgroundImage})` }}
         />
       )}
+      {isServerDetail && <div className="pointer-events-none fixed inset-0 z-10 bg-slate-200/35 dark:bg-black/20" />}
       <div
         className={cn("flex min-h-screen w-full flex-col", {
           "bg-background": !customBackgroundImage,
         })}
       >
-        <main className="flex z-20 min-h-[calc(100vh-calc(var(--spacing)*16))] flex-1 flex-col gap-4 p-4 md:p-10 md:pt-8">
+        <main
+          className={cn("z-20 flex min-h-screen flex-1 flex-col p-4 md:p-10 md:pt-8", {
+            "gap-4": !isServerDetail,
+          })}
+        >
           <RefreshToast />
-          <Header />
+          {!isServerDetail && <Header />}
           <DashCommand />
           <Routes>
             <Route path="/" element={<Server />} />
@@ -107,7 +114,7 @@ const MainApp: React.FC = () => {
             <Route path="/error" element={<ErrorPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <Footer />
+          {!isServerDetail && <Footer />}
         </main>
       </div>
     </ErrorBoundary>
