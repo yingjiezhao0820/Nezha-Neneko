@@ -103,15 +103,6 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
       }, {} as ChartConfig),
     [monitorColors, visibleMonitors],
   )
-  const tooltipContentClass =
-    visibleMonitors.length > 60
-      ? "sm:grid-cols-4 sm:gap-x-5"
-      : visibleMonitors.length > 40
-        ? "sm:grid-cols-3 sm:gap-x-5"
-        : visibleMonitors.length > 20
-          ? "sm:grid-cols-2 sm:gap-x-5"
-          : undefined
-
   const toggleMonitor = (monitorId: number) => {
     setSelectedMonitorIds((current) => {
       if (current === null) return new Set([monitorId])
@@ -196,13 +187,14 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
               wrapperStyle={{ pointerEvents: "auto" }}
               content={
                 <ChartTooltipContent
-                  className={cn(
-                    "max-h-[min(70vh,32rem)] max-w-[min(92vw,64rem)] overflow-y-auto overscroll-contain",
-                    visibleMonitors.length > 20 && "sm:min-w-[28rem]",
-                    visibleMonitors.length > 40 && "sm:min-w-[42rem]",
-                    visibleMonitors.length > 60 && "sm:min-w-[56rem]",
-                  )}
-                  contentClassName={tooltipContentClass}
+                  className="max-h-[min(70vh,32rem)] max-w-[92vw] overflow-auto overscroll-contain"
+                  contentClassName="w-max"
+                  contentStyle={{
+                    gridAutoColumns: "minmax(8rem, 1fr)",
+                    gridAutoFlow: "column",
+                    gridTemplateRows: `repeat(${Math.min(12, visibleMonitors.length)}, minmax(0, auto))`,
+                    columnGap: "1.25rem",
+                  }}
                   indicator="line"
                   labelFormatter={(_, payload) => (payload[0]?.payload?.created_at ? formatTime(payload[0].payload.created_at) : "")}
                   formatter={(value, name) => (

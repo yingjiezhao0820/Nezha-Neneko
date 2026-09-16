@@ -1,7 +1,7 @@
 # Nezha-Neneko
 
-[![Build and Release Theme](https://github.com/yingjiezhao0820/nezha-BITJEBE/actions/workflows/release.yml/badge.svg)](https://github.com/yingjiezhao0820/nezha-BITJEBE/actions/workflows/release.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/yingjiezhao0820/nezha-BITJEBE)](https://github.com/yingjiezhao0820/nezha-BITJEBE/releases)
+[![Build and Release Theme](https://github.com/yingjiezhao0820/Nezha-Neneko/actions/workflows/release.yml/badge.svg)](https://github.com/yingjiezhao0820/Nezha-Neneko/actions/workflows/release.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/yingjiezhao0820/nezha-BITJEBE)](https://github.com/yingjiezhao0820/Nezha-Neneko/releases)
 [![License](https://img.shields.io/github/license/yingjiezhao0820/nezha-BITJEBE)](./LICENSE)
 
 一个面向 [Komari Monitor](https://github.com/komari-monitor/komari) 的响应式监控主题。本仓库在上游主题基础上持续维护，重点改进首页性能、服务器详情、资产统计、流量展示和可配置毛玻璃视觉。
@@ -47,7 +47,7 @@
 
 ### 从 Release 安装
 
-1. 前往本仓库的 [Releases](https://github.com/yingjiezhao0820/nezha-BITJEBE/releases/latest) 下载最新主题 ZIP。
+1. 前往本仓库的 [Releases](https://github.com/yingjiezhao0820/Nezha-Neneko/releases/latest) 下载最新主题 ZIP。
 2. 进入 Komari 管理面板的主题管理页面。
 3. 上传 ZIP，并将该主题设置为当前主题。
 
