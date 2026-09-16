@@ -88,30 +88,30 @@ export default function TrafficBar({ used, limit, resetDay, limitType }: Traffic
     <div className="space-y-1.5 w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-baseline gap-1">
-          <span className="text-[10px] font-medium text-neutral-800 dark:text-neutral-200">
+          <span className="text-[10px] font-medium text-white">
             {usedFormatted}
           </span>
-          <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+          <span className="text-[10px] text-white/55">
             / {limitFormatted}
           </span>
         </div>
         {infoItems.length > 0 && (
           shouldCycle ? (
             <div
-              className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300 transition-opacity duration-500"
+              className="text-[10px] font-medium text-white/70 transition-opacity duration-500"
               style={{ opacity: fading ? 0 : 1 }}
             >
               {infoItems[infoIndex % infoItems.length]}
             </div>
           ) : (
-            <span className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300">
+            <span className="text-[10px] font-medium text-white/70">
               {infoItems[0]}
             </span>
           )
         )}
       </div>
       <div className="relative h-1.5 w-full">
-        <div className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800 rounded-full" />
+        <div className="absolute inset-0 rounded-full bg-white/10" />
         <div
           className="absolute inset-0 rounded-full transition-all duration-300"
           style={{

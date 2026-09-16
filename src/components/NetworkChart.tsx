@@ -99,7 +99,7 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
     <section className="overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/45 shadow-none backdrop-blur-md">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         {monitors.map((monitor) => (
-          <div className="-mr-px -mt-px border-r border-t border-white/10 px-4 py-3" key={monitor.monitor_id}>
+          <div className="-mr-px min-w-0 border-b border-r border-white/10 px-4 py-3" key={monitor.monitor_id}>
             <div className="flex items-center justify-between gap-2">
               <span className="truncate text-xs text-white/75">{monitor.monitor_name}</span>
               <span className="whitespace-nowrap text-[10px] text-white/45">丢包 {getLatestLoss(monitor).toFixed(2)}%</span>

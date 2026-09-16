@@ -28,8 +28,6 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
 
   const showFlag = true
 
-  const customBackgroundImage = (window.CustomBackgroundImage as string) !== "" ? window.CustomBackgroundImage : undefined
-
   // @ts-expect-error ShowNetTransfer is a global variable
   const showNetTransfer = window.ShowNetTransfer as boolean
 
@@ -41,13 +39,10 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
   return online ? (
     <Card
       className={cn(
-        "flex flex-col items-center justify-start gap-3 p-3 md:px-5 cursor-pointer hover:bg-accent/50 transition-colors",
+        "flex cursor-pointer flex-col items-center justify-start gap-3 rounded-2xl border-white/10 bg-neutral-900/45 p-3 text-white shadow-none backdrop-blur-md transition-colors hover:bg-neutral-900/55 md:px-5 [&_.text-muted-foreground]:text-white/55",
         {
           "flex-col": fixedTopServerName,
           "lg:flex-row": !fixedTopServerName,
-        },
-        {
-          "bg-card/70": customBackgroundImage,
         },
       )}
       onClick={cardClick}
@@ -141,13 +136,13 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
           <section className={"flex items-center w-full justify-between gap-1"}>
             <Badge
               variant="secondary"
-              className="items-center flex-1 justify-center rounded-[8px] text-nowrap text-[11px] border-muted-50 shadow-md shadow-neutral-200/30 dark:shadow-none"
+              className="flex flex-1 items-center justify-center text-nowrap rounded-lg border-white/10 bg-white/10 text-[11px] text-white shadow-none"
             >
               {t("serverCard.upload")}:{formatBytes(net_out_transfer)}
             </Badge>
             <Badge
               variant="outline"
-              className="items-center flex-1 justify-center rounded-[8px] text-nowrap text-[11px] shadow-md shadow-neutral-200/30 dark:shadow-none"
+              className="flex flex-1 items-center justify-center text-nowrap rounded-lg border-white/10 bg-transparent text-[11px] text-white shadow-none"
             >
               {t("serverCard.download")}:{formatBytes(net_in_transfer)}
             </Badge>
@@ -159,14 +154,11 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
   ) : (
     <Card
       className={cn(
-        "flex flex-col items-center justify-start gap-3 sm:gap-0 p-3 md:px-5 cursor-pointer hover:bg-accent/50 transition-colors",
-        showNetTransfer ? "lg:min-h-[91px] min-h-[123px]" : "lg:min-h-[61px] min-h-[93px]",
+        "flex cursor-pointer flex-col items-center justify-start gap-3 rounded-2xl border-white/10 bg-neutral-900/45 p-3 text-white shadow-none backdrop-blur-md transition-colors hover:bg-neutral-900/55 sm:gap-0 md:px-5 [&_.text-muted-foreground]:text-white/55",
+        showNetTransfer ? "min-h-[123px] lg:min-h-[91px]" : "min-h-[93px] lg:min-h-[61px]",
         {
           "flex-col": fixedTopServerName,
           "lg:flex-row": !fixedTopServerName,
-        },
-        {
-          "bg-card/70": customBackgroundImage,
         },
       )}
       onClick={cardClick}

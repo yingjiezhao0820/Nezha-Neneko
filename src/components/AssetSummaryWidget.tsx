@@ -1,4 +1,4 @@
-import { CircleDollarSign, Heart, HelpCircle, RefreshCw, X } from "lucide-react"
+import { Check, CircleDollarSign, Copy, Heart, HelpCircle, RefreshCw, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { formatBytes } from "@/lib/format"
@@ -243,6 +243,39 @@ function formatEndDate(endDate?: string): string {
   return Number.isFinite(endMs) ? new Date(endMs).toLocaleDateString() : "-"
 }
 
+function escapeMarkdownCell(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\r?\n/g, "<br>")
+}
+
+function buildMarkdownTable(rows: Array<[string, string]>): string {
+  return ["| 项目 | 信息 |", "| --- | --- |", ...rows.map(([label, value]) => `| ${escapeMarkdownCell(label)} | ${escapeMarkdownCell(value)} |`)].join("\n")
+}
+
+async function copyTextToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return
+    } catch {
+      // Fall back for browsers that expose Clipboard API but deny access.
+    }
+  }
+
+  const textarea = document.createElement("textarea")
+  textarea.value = text
+  textarea.setAttribute("readonly", "")
+  textarea.style.position = "fixed"
+  textarea.style.opacity = "0"
+  document.body.appendChild(textarea)
+  textarea.select()
+  const copied = document.execCommand("copy")
+  textarea.remove()
+
+  if (!copied) {
+    throw new Error("复制失败")
+  }
+}
+
 function buildAssetItem(now: number, server: NezhaServer, rates: ExchangeRates): AssetItem {
   const formatted = formatNezhaInfo(now, server)
   const parsed = parsePublicNote(formatted.public_note)
@@ -358,6 +391,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
   const [tradeItem, setTradeItem] = useState<AssetItem | null>(null)
   const [tradeAmount, setTradeAmount] = useState("")
   const [tradeDate, setTradeDate] = useState(new Date().toISOString().slice(0, 10))
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle")
   const { rates, status } = useExchangeRates(refreshKey)
 
   const palette = useMemo(() => {
@@ -402,11 +436,14 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
 
   const tradeRemainingValue = cnyToCurrency(selectedTradeRemaining, targetCurrency, rates)
   const tradeAmountValue = Number(tradeAmount)
-  const premiumValue = Number.isFinite(tradeAmountValue) && tradeAmount !== "" && tradeRemainingValue !== null ? tradeAmountValue - tradeRemainingValue : null
+  const hasValidTradeAmount = tradeAmount.trim() !== "" && Number.isFinite(tradeAmountValue) && tradeAmountValue >= 0
+  const premiumValue = hasValidTradeAmount && tradeRemainingValue !== null ? tradeAmountValue - tradeRemainingValue : null
   const premiumRate = premiumValue !== null && tradeRemainingValue && tradeRemainingValue > 0 ? (premiumValue / tradeRemainingValue) * 100 : null
+  const canCopyTrade = hasValidTradeAmount && premiumValue !== null
 
   const persistCurrency = (currency: string) => {
     setTargetCurrency(currency)
+    setCopyStatus("idle")
     localStorage.setItem("asset_card_currency", currency)
   }
 
@@ -419,6 +456,47 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
     const nextValue = !excludeFree
     setExcludeFree(nextValue)
     localStorage.setItem("asset_card_exclude_free", String(nextValue))
+  }
+
+  const handleCopyTrade = async () => {
+    if (!tradeItem || !canCopyTrade || premiumValue === null) {
+      return
+    }
+
+    const trafficUsed = calcTrafficUsed(
+      tradeItem.formatted.net_out_transfer,
+      tradeItem.formatted.net_in_transfer,
+      tradeItem.formatted.traffic_limit_type,
+    )
+    const premiumRateText = premiumRate === null ? "-" : `${premiumRate > 0 ? "+" : ""}${premiumRate.toFixed(2)}%`
+    const markdown = [
+      "### 服务器交易信息",
+      "",
+      buildMarkdownTable([
+        ["服务器 ID", String(tradeItem.id)],
+        ["名称", tradeItem.name],
+        ["CPU", `${tradeItem.formatted.cpu.toFixed(2)}%`],
+        ["内存", formatBytes(tradeItem.formatted.mem_total)],
+        ["硬盘", formatBytes(tradeItem.formatted.disk_total)],
+        ["流量额度", tradeItem.formatted.traffic_limit > 0 ? formatBytes(tradeItem.formatted.traffic_limit) : "无限制"],
+        ["已用流量", formatBytes(trafficUsed)],
+        ["原价", tradeItem.sourcePriceText],
+        ["到期时间", formatEndDate(tradeItem.billing?.endDate)],
+        ["交易日期", tradeDate],
+        ["交易币种", targetCurrency],
+        ["交易金额", formatMoney(tradeAmountValue, targetCurrency)],
+        ["剩余价值", formatMoney(tradeRemainingValue, targetCurrency)],
+        ["溢价金额", formatMoney(premiumValue, targetCurrency)],
+        ["溢价率", premiumRateText],
+      ]),
+    ].join("\n")
+
+    try {
+      await copyTextToClipboard(markdown)
+      setCopyStatus("copied")
+    } catch {
+      setCopyStatus("error")
+    }
   }
 
   return (
@@ -487,6 +565,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                     onClick={() => {
                       setTradeDate(new Date().toISOString().slice(0, 10))
                       setTradeAmount("")
+                      setCopyStatus("idle")
                       setTradeItem(item)
                     }}
                   >
@@ -628,7 +707,10 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                     className={cn("h-9 rounded-md border border-border bg-background px-3 text-foreground outline-none focus:ring-2", palette.focusInput)}
                     type="date"
                     value={tradeDate}
-                    onChange={(event) => setTradeDate(event.target.value)}
+                    onChange={(event) => {
+                      setTradeDate(event.target.value)
+                      setCopyStatus("idle")
+                    }}
                   />
                 </label>
                 <label className="grid gap-1 text-[13px] font-semibold text-muted-foreground">
@@ -640,7 +722,10 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                     step="0.01"
                     placeholder="请输入交易金额"
                     value={tradeAmount}
-                    onChange={(event) => setTradeAmount(event.target.value)}
+                    onChange={(event) => {
+                      setTradeAmount(event.target.value)
+                      setCopyStatus("idle")
+                    }}
                   />
                 </label>
                 <div className="rounded-lg border border-border bg-muted/30 px-3 py-1 text-[13px]">
@@ -661,6 +746,16 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                     </span>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+                  disabled={!canCopyTrade}
+                  onClick={handleCopyTrade}
+                  title={canCopyTrade ? "复制交易信息 Markdown 表格" : "请先填写交易金额并确保剩余价值可计算"}
+                >
+                  {copyStatus === "copied" ? <Check className="size-4" /> : <Copy className="size-4" />}
+                  {copyStatus === "copied" ? "已复制 Markdown" : copyStatus === "error" ? "复制失败，请重试" : "复制 Markdown 表格"}
+                </button>
               </div>
             </div>
           </section>

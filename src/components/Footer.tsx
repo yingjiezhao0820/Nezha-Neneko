@@ -1,10 +1,8 @@
 // import { fetchSetting } from "@/lib/nezha-api"
 // import { useQuery } from "@tanstack/react-query"
 import React from "react"
-import { useTranslation } from "react-i18next"
 
 const Footer: React.FC = () => {
-  const { t } = useTranslation()
   const isMac = /macintosh|mac os x/i.test(navigator.userAgent)
 
   // const { data: settingData } = useQuery({
@@ -27,12 +25,6 @@ const Footer: React.FC = () => {
                 {isMac ? <span className="text-xs">⌘</span> : "Ctrl "}K
               </kbd>
             </p>
-            <section>
-              {t("footer.themeBy")}
-              <a href={"https://github.com/BITJEBE/nezha-BITJEBE"} target="_blank">
-                nezha-BITJEBE
-              </a>
-            </section>
           </div>
         </section>
       </section>

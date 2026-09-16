@@ -28,19 +28,12 @@ export default function ServerCardInline({ now, serverInfo }: { now: number; ser
 
   const showFlag = true
 
-  const customBackgroundImage = (window.CustomBackgroundImage as string) !== "" ? window.CustomBackgroundImage : undefined
-
   const parsedData = parsePublicNote(public_note)
 
   return online ? (
     <section>
       <Card
-        className={cn(
-          "flex items-center lg:flex-row justify-start gap-3 p-3 md:px-5 cursor-pointer hover:bg-accent/50 transition-colors min-w-[900px] w-full",
-          {
-            "bg-card/70": customBackgroundImage,
-          },
-        )}
+        className="flex w-full min-w-[900px] cursor-pointer items-center justify-start gap-3 rounded-2xl border-white/10 bg-neutral-900/45 p-3 text-white shadow-none backdrop-blur-md transition-colors hover:bg-neutral-900/55 md:px-5 lg:flex-row [&_.text-muted-foreground]:text-white/55"
         onClick={cardClick}
       >
         <section className={cn("grid items-center gap-2 lg:w-36")} style={{ gridTemplateColumns: "auto auto 1fr" }}>
@@ -127,12 +120,7 @@ export default function ServerCardInline({ now, serverInfo }: { now: number; ser
     </section>
   ) : (
     <Card
-      className={cn(
-        "flex  min-h-[61px] min-w-[900px] items-center justify-start p-3 md:px-5 flex-row cursor-pointer hover:bg-accent/50 transition-colors",
-        {
-          "bg-card/70": customBackgroundImage,
-        },
-      )}
+      className="flex min-h-[61px] min-w-[900px] cursor-pointer flex-row items-center justify-start rounded-2xl border-white/10 bg-neutral-900/45 p-3 text-white shadow-none backdrop-blur-md transition-colors hover:bg-neutral-900/55 md:px-5 [&_.text-muted-foreground]:text-white/55"
       onClick={cardClick}
     >
       <section className={cn("grid items-center gap-2 w-40")} style={{ gridTemplateColumns: "auto auto 1fr" }}>

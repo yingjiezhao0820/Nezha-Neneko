@@ -11,7 +11,7 @@ export default function ServerUsageBar({ value }: ServerUsageBarProps) {
       aria-labelledby={"Server Usage Bar"}
       value={value}
       indicatorClassName={value > 90 ? "bg-red-500" : value > 70 ? "bg-orange-400" : "bg-green-500"}
-      className={"h-[3px] rounded-sm"}
+      className="h-[3px] rounded-sm bg-white/10"
     />
   )
 }
