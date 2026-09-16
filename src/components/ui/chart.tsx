@@ -98,7 +98,7 @@ const ChartTooltipContent = React.forwardRef<
       nameKey?: string
       labelKey?: string
       contentClassName?: string
-      contentStyle?: React.CSSProperties
+      itemsStyle?: React.CSSProperties
     }
 >(
   (
@@ -107,7 +107,7 @@ const ChartTooltipContent = React.forwardRef<
       payload,
       className,
       contentClassName,
-      contentStyle,
+      itemsStyle,
       indicator = "dot",
       hideLabel = false,
       hideIndicator = false,
@@ -159,7 +159,7 @@ const ChartTooltipContent = React.forwardRef<
         )}
       >
         {!nestLabel ? tooltipLabel : null}
-        <div className={cn("grid gap-1.5", contentClassName)} style={contentStyle}>
+        <div className={cn("grid gap-1.5", contentClassName)} style={itemsStyle}>
           {payload.map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)

@@ -190,7 +190,7 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
                 <ChartTooltipContent
                   className="max-h-[min(70vh,32rem)] max-w-[92vw] overflow-auto overscroll-contain"
                   contentClassName="w-max"
-                  contentStyle={{
+                  itemsStyle={{
                     gridAutoFlow: "column",
                     gridTemplateColumns: `repeat(${tooltipColumnCount}, minmax(8rem, max-content))`,
                     gridTemplateRows: `repeat(${Math.min(12, visibleMonitors.length)}, minmax(0, auto))`,

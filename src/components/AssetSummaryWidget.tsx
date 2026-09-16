@@ -527,7 +527,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
       {tradeItem && (
         <div className="fixed inset-0 z-[1999] flex items-center justify-center bg-black/20 px-4 backdrop-blur-sm" onClick={() => setTradeItem(null)}>
           <section
-            className="glass-card asset-glass max-h-[90vh] w-full max-w-[550px] overflow-hidden rounded-2xl border border-white/15 text-white shadow-none backdrop-blur-xl"
+            className="glass-card asset-glass max-h-[96vh] w-full max-w-[600px] overflow-hidden rounded-2xl border border-white/15 text-white shadow-none backdrop-blur-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
@@ -540,8 +540,8 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
               </button>
             </div>
 
-            <div className="max-h-[calc(90vh-52px)] overflow-y-auto p-4">
-              <div className={cn("mb-3 text-sm font-bold", palette.panelTitle)}>服务器信息</div>
+            <div className="max-h-[calc(96vh-52px)] overflow-y-auto p-4 scrollbar-hidden">
+              <div className={cn("mb-2 text-sm font-bold", palette.panelTitle)}>服务器信息</div>
               <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-border bg-muted/30 text-[13px]">
                 <div className="border-b border-r border-border p-2">
                   <span className="text-muted-foreground">名称</span>
@@ -579,48 +579,50 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                 </div>
               </div>
 
-              <div className="my-4 h-px bg-border" />
-              <div className={cn("mb-3 text-sm font-bold", palette.panelTitle)}>交易计算</div>
-              <div className="grid gap-3">
-                <label className="grid gap-1 text-[13px] font-semibold text-muted-foreground">
-                  交易日期
-                  <input
-                    className={cn("h-9 rounded-md border border-border bg-background px-3 text-foreground outline-none focus:ring-2", palette.focusInput)}
-                    type="date"
-                    value={tradeDate}
-                    onChange={(event) => {
-                      setTradeDate(event.target.value)
-                      setCopyStatus("idle")
-                    }}
-                  />
-                </label>
-                <label className="grid gap-1 text-[13px] font-semibold text-muted-foreground">
-                  交易金额
-                  <input
-                    className={cn("h-11 rounded-md border-2 border-border bg-background px-3 text-base font-bold outline-none transition focus:ring-2", palette.primaryText, palette.focusInput)}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="请输入交易金额"
-                    value={tradeAmount}
-                    onChange={(event) => {
-                      setTradeAmount(event.target.value)
-                      setCopyStatus("idle")
-                    }}
-                  />
-                </label>
-                <div className="rounded-lg border border-border bg-muted/30 px-3 py-1 text-[13px]">
-                  <div className="flex justify-between border-b border-border py-2">
+              <div className="my-3 h-px bg-border" />
+              <div className={cn("mb-2 text-sm font-bold", palette.panelTitle)}>交易计算</div>
+              <div className="grid gap-2.5">
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="grid min-w-0 gap-1 text-[13px] font-semibold text-muted-foreground">
+                    交易日期
+                    <input
+                      className={cn("h-9 min-w-0 w-full rounded-md border border-border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-2", palette.focusInput)}
+                      type="date"
+                      value={tradeDate}
+                      onChange={(event) => {
+                        setTradeDate(event.target.value)
+                        setCopyStatus("idle")
+                      }}
+                    />
+                  </label>
+                  <label className="grid min-w-0 gap-1 text-[13px] font-semibold text-muted-foreground">
+                    交易金额
+                    <input
+                      className={cn("h-9 min-w-0 w-full rounded-md border-2 border-border bg-background px-2.5 text-sm font-bold outline-none transition focus:ring-2", palette.primaryText, palette.focusInput)}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="请输入交易金额"
+                      value={tradeAmount}
+                      onChange={(event) => {
+                        setTradeAmount(event.target.value)
+                        setCopyStatus("idle")
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/30 px-3 py-0.5 text-[13px]">
+                  <div className="flex justify-between border-b border-border py-1.5">
                     <span className="text-muted-foreground">剩余价值</span>
                     <span className={cn("font-semibold", palette.primaryText)}>{formatMoney(tradeRemainingValue, targetCurrency)}</span>
                   </div>
-                  <div className="flex justify-between border-b border-border py-2">
+                  <div className="flex justify-between border-b border-border py-1.5">
                     <span className="text-muted-foreground">溢价金额</span>
                     <span className={cn("font-semibold text-red-600", premiumValue !== null && premiumValue <= 0 && "text-green-600")}>
                       {premiumValue === null ? "-" : formatMoney(premiumValue, targetCurrency)}
                     </span>
                   </div>
-                  <div className="flex justify-between py-2">
+                  <div className="flex justify-between py-1.5">
                     <span className="text-muted-foreground">溢价率</span>
                     <span className={cn("font-semibold text-red-600", premiumValue !== null && premiumValue <= 0 && "text-green-600")}>
                       {premiumRate === null ? "-" : `${premiumRate > 0 ? "+" : ""}${premiumRate.toFixed(2)}%`}
@@ -629,7 +631,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                 </div>
                 <button
                   type="button"
-                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-white/15 bg-white/15 px-3 text-sm font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="flex h-9 w-full items-center justify-center gap-2 rounded-md border border-white/15 bg-white/15 px-3 text-sm font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-45"
                   disabled={!canCopyTrade}
                   onClick={handleCopyTrade}
                   title={canCopyTrade ? "复制交易信息 Markdown 表格" : "请先填写交易金额并确保剩余价值可计算"}
