@@ -28,6 +28,7 @@ export default function ServerCardInline({ now, serverInfo }: { now: number; ser
 
   const showFlag = true
   const themeSettings = window as unknown as Record<string, unknown>
+  const enableHoverAnimation = themeSettings.EnableServerCardHoverAnimation === true
   const showTrafficBar = traffic_limit > 0 && themeSettings.ShowTrafficBar !== false
   const trafficBarInMetricRow = showTrafficBar && themeSettings.TrafficBarInMetricRow === true
   const trafficUsed = calcTrafficUsed(net_out_transfer, net_in_transfer, traffic_limit_type)
@@ -37,7 +38,11 @@ export default function ServerCardInline({ now, serverInfo }: { now: number; ser
   return online ? (
     <section>
       <Card
-        className="glass-card glass-card-interactive flex w-full min-w-[900px] cursor-pointer items-center justify-start gap-3 rounded-2xl border-white/10 p-3 text-white shadow-none backdrop-blur-md transition-colors md:px-5 lg:flex-row [&_.text-muted-foreground]:text-white/55"
+        className={cn(
+          "glass-card glass-card-interactive flex w-full min-w-[900px] cursor-pointer items-center justify-start gap-3 rounded-2xl border-white/10 p-3 text-white shadow-none backdrop-blur-md transition-colors md:px-5 lg:flex-row [&_.text-muted-foreground]:text-white/55",
+          enableHoverAnimation &&
+            "relative z-0 transform-gpu transition-[transform,background-color,box-shadow] duration-200 ease-out hover:z-10 hover:-translate-y-1 hover:scale-[1.005] hover:shadow-[0_12px_32px_rgba(0,0,0,0.22)] active:translate-y-0 active:scale-[0.998] motion-reduce:transform-none motion-reduce:transition-none",
+        )}
         onClick={cardClick}
       >
         <section className={cn("grid items-center gap-2 lg:w-36")} style={{ gridTemplateColumns: "auto auto 1fr" }}>
@@ -133,7 +138,11 @@ export default function ServerCardInline({ now, serverInfo }: { now: number; ser
     </section>
   ) : (
     <Card
-      className="glass-card glass-card-interactive flex min-h-[61px] min-w-[900px] cursor-pointer flex-row items-center justify-start rounded-2xl border-white/10 p-3 text-white shadow-none backdrop-blur-md transition-colors md:px-5 [&_.text-muted-foreground]:text-white/55"
+      className={cn(
+        "glass-card glass-card-interactive flex min-h-[61px] min-w-[900px] cursor-pointer flex-row items-center justify-start rounded-2xl border-white/10 p-3 text-white shadow-none backdrop-blur-md transition-colors md:px-5 [&_.text-muted-foreground]:text-white/55",
+        enableHoverAnimation &&
+          "relative z-0 transform-gpu transition-[transform,background-color,box-shadow] duration-200 ease-out hover:z-10 hover:-translate-y-1 hover:scale-[1.005] hover:shadow-[0_12px_32px_rgba(0,0,0,0.22)] active:translate-y-0 active:scale-[0.998] motion-reduce:transform-none motion-reduce:transition-none",
+      )}
       onClick={cardClick}
     >
       <section className={cn("grid items-center gap-2 w-40")} style={{ gridTemplateColumns: "auto auto 1fr" }}>

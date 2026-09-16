@@ -30,6 +30,7 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
 
   const themeSettings = window as unknown as Record<string, unknown>
   const showNetTransfer = themeSettings.ShowNetTransfer === true
+  const enableHoverAnimation = themeSettings.EnableServerCardHoverAnimation === true
   const fixedTopServerName = themeSettings.FixedTopServerName === true
   const showTrafficBar = traffic_limit > 0 && themeSettings.ShowTrafficBar !== false
   const trafficBarInMetricRow = showTrafficBar && themeSettings.TrafficBarInMetricRow === true
@@ -41,6 +42,8 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
     <Card
       className={cn(
         "glass-card glass-card-interactive flex cursor-pointer flex-col items-center justify-start gap-3 rounded-2xl border-white/10 p-3 text-white shadow-none backdrop-blur-md transition-colors md:px-5 [&_.text-muted-foreground]:text-white/55",
+        enableHoverAnimation &&
+          "relative z-0 transform-gpu transition-[transform,background-color,box-shadow] duration-200 ease-out hover:z-10 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_12px_32px_rgba(0,0,0,0.22)] active:translate-y-0 active:scale-[0.995] motion-reduce:transform-none motion-reduce:transition-none",
         {
           "flex-col": fixedTopServerName,
           "lg:flex-row": !fixedTopServerName,
@@ -166,6 +169,8 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
       className={cn(
         "glass-card glass-card-interactive flex cursor-pointer flex-col items-center justify-start gap-3 rounded-2xl border-white/10 p-3 text-white shadow-none backdrop-blur-md transition-colors sm:gap-0 md:px-5 [&_.text-muted-foreground]:text-white/55",
         showNetTransfer ? "min-h-[123px] lg:min-h-[91px]" : "min-h-[93px] lg:min-h-[61px]",
+        enableHoverAnimation &&
+          "relative z-0 transform-gpu transition-[transform,background-color,box-shadow] duration-200 ease-out hover:z-10 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_12px_32px_rgba(0,0,0,0.22)] active:translate-y-0 active:scale-[0.995] motion-reduce:transform-none motion-reduce:transition-none",
         {
           "flex-col": fixedTopServerName,
           "lg:flex-row": !fixedTopServerName,

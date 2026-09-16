@@ -205,6 +205,13 @@
                 "help": "数值越小越透明、越轻盈；数值越大背景颜色越明显。"
             },
             {
+                "key": "EnableServerCardHoverAnimation",
+                "name": "首页卡片悬停动画",
+                "type": "switch",
+                "default": false,
+                "help": "开启后首页标准卡片和行内卡片会在鼠标悬停时轻微浮起、放大并增加阴影。"
+            },
+            {
                 "key": "FixedTopServerName",
                 "name": "固定顶部服务器名称",
                 "type": "switch",
