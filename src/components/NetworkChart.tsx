@@ -63,9 +63,11 @@ function getLatestLoss(monitor: NezhaMonitor) {
 export function NetworkChart({ server_id, show }: { server_id: number; show: boolean }) {
   const { t } = useTranslation()
   const [selectedMonitorIds, setSelectedMonitorIds] = useState<Set<number> | null>(null)
+  const configuredHours = Number((window as unknown as Record<string, unknown>).ServerDetailMonitorHours)
+  const monitorHours = Number.isFinite(configuredHours) && configuredHours >= 1 ? Math.min(720, Math.floor(configuredHours)) : 24
   const { data: monitorData } = useQuery({
-    queryKey: ["monitor", server_id, 24],
-    queryFn: () => fetchMonitor(server_id, 24),
+    queryKey: ["monitor", server_id, monitorHours],
+    queryFn: () => fetchMonitor(server_id, monitorHours),
     enabled: show,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -129,8 +131,8 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
             <button
               type="button"
               className={cn(
-                "-mr-px min-w-0 border-b border-r border-white/10 px-4 py-3 text-left transition",
-                isActive ? "bg-white/[0.06]" : "opacity-40 hover:bg-white/[0.04] hover:opacity-75",
+                "relative z-0 -mr-px min-w-0 transform-gpu border-b border-r border-white/10 px-4 py-3 text-left transition-[transform,background-color,box-shadow,opacity] duration-200 ease-out hover:z-10 hover:scale-[1.02] hover:bg-white/[0.11] hover:shadow-[0_8px_24px_rgba(0,0,0,0.18)] active:scale-[0.985]",
+                isActive ? "bg-white/[0.06]" : "opacity-40 hover:opacity-75",
               )}
               key={monitor.monitor_id}
               aria-pressed={isActive}

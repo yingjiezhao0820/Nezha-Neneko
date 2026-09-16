@@ -79,6 +79,8 @@ const MainApp: React.FC = () => {
   const customMobileBackgroundImage = window.CustomMobileBackgroundImage !== "" ? window.CustomMobileBackgroundImage : undefined
   const themeSettings = window as unknown as Record<string, unknown>
   const showAssetCard = themeSettings.ShowAssetCard === true
+  const showServerDetailAssets = themeSettings.ShowServerDetailAssets === true
+  const mountAssetWidget = showAssetCard || showServerDetailAssets
   const glassCardStyle = resolveGlassCardStyle(themeSettings)
 
   return (
@@ -107,7 +109,7 @@ const MainApp: React.FC = () => {
         <main className="z-20 flex min-h-screen flex-1 flex-col gap-4 p-4 md:p-10 md:pt-8">
           <RefreshToast />
           <Header />
-          {showAssetCard && lastMessage && <AssetSummaryWidget now={lastMessage.now} servers={lastMessage.servers} />}
+          {mountAssetWidget && lastMessage && <AssetSummaryWidget now={lastMessage.now} servers={lastMessage.servers} />}
           <DashCommand />
           <Routes>
             <Route path="/" element={<Server />} />

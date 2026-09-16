@@ -79,13 +79,7 @@
     "remainingDays": "剩余天数",
     "expiryDate": "到期时间",
     "assetInfo": "资产与流量",
-    "serverName": "服务器",
-    "copyMarkdown": "复制 Markdown",
-    "copied": "已复制",
-    "copyFailed": "复制失败",
-    "trafficUsed": "已用流量",
-    "trafficLimit": "流量额度",
-    "unlimited": "无限制"
+    "openCalculator": "资费计算"
   },
   "serverDetailChart": {
     "process": "进程数",

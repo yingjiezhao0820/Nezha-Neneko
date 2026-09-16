@@ -24,7 +24,7 @@
 ### 服务器详情
 
 - 展示系统、CPU、内存、存储、负载、进程、实时网速和连接数。
-- 可通过 `ShowServerDetailAssets` 开启资产与流量区域，展示资费、Traffic 使用进度、剩余价值、剩余天数、到期时间及 Markdown 快速复制。
+- 可通过 `ShowServerDetailAssets` 开启资产与流量区域，展示资费、Traffic 使用进度、剩余价值、剩余天数和到期时间，并可直接打开当前服务器的资费计算弹窗。
 - 检测点表格支持单选、多选、取消选择以及综合延迟曲线。
 - 首页与详情页共用导航、时钟和背景体验，路由切换更连贯。
 
@@ -101,6 +101,7 @@ npm run build
 | `DefaultBillingCurrency` | 设置默认账单币种或跟随后端 |
 | `ServerBillingCurrencyOverrides` | 按服务器覆盖账单币种 |
 | `ForcePeakCutEnabled` | 裁剪网络图表异常峰值，提高可读性 |
+| `ServerDetailMonitorHours` | 设置详情页检测图表时间范围，默认 24 小时 |
 
 其余选项及帮助文本请参阅 [`komari-theme.json`](./komari-theme.json)。
 

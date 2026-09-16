@@ -1,5 +1,5 @@
+import { ASSET_TRADE_OPEN_EVENT } from "@/components/AssetSummaryWidget"
 import { BackIcon } from "@/components/Icon"
-import { buildMarkdownTable, copyTextToClipboard } from "@/lib/clipboard"
 import ServerFlag from "@/components/ServerFlag"
 import TrafficBar from "@/components/TrafficBar"
 import { ServerDetailLoading } from "@/components/loading/ServerDetailLoading"
@@ -16,7 +16,7 @@ import {
   parseBillingAmountNumber,
   parsePublicNote,
 } from "@/lib/utils"
-import { Check, Copy } from "lucide-react"
+import { Calculator } from "lucide-react"
 import { ReactNode, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -68,7 +68,6 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
   const navigate = useNavigate()
   const { lastMessage, connected } = useWebSocketContext()
   const [hasHistory, setHasHistory] = useState(false)
-  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle")
 
   useEffect(() => {
     setHasHistory(sessionStorage.getItem("fromMainPage") === "true")
@@ -120,38 +119,19 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
     if (hasHistory) navigate(-1)
     else navigate("/")
   }
-  const handleCopyAssetMarkdown = async () => {
-    const markdown = [
-      `### ${t("serverDetail.assetInfo")}`,
-      "",
-      buildMarkdownTable([
-        [t("serverDetail.serverName"), info.name],
-        [t("billingInfo.price"), billingPrice],
-        [t("serverDetail.remainingValue"), remainingValue],
-        [t("serverDetail.remainingDays"), remainingDays],
-        [t("serverDetail.expiryDate"), expiryDate],
-        [t("serverDetail.trafficUsed"), formatBytes(trafficUsed)],
-        [t("serverDetail.trafficLimit"), showTraffic ? formatBytes(trafficLimit) : t("serverDetail.unlimited")],
-      ]),
-    ].join("\n")
-
-    try {
-      await copyTextToClipboard(markdown)
-      setCopyStatus("copied")
-    } catch {
-      setCopyStatus("error")
-    }
+  const openAssetCalculator = () => {
+    window.dispatchEvent(new CustomEvent(ASSET_TRADE_OPEN_EVENT, { detail: { serverId: info.id } }))
   }
 
   return (
     <div className="space-y-4">
-      <section className="glass-card rounded-2xl border border-white/10 px-5 py-4 shadow-none backdrop-blur-md sm:px-6">
-        <button type="button" onClick={goBack} className="flex items-center gap-1.5 text-left">
+      <section className="glass-card overflow-hidden rounded-2xl border border-white/10 shadow-none backdrop-blur-md">
+        <button type="button" onClick={goBack} className="flex w-full items-center gap-1.5 px-5 py-4 text-left sm:px-6">
           <BackIcon />
           <h1 className="max-w-[70vw] truncate text-xl font-semibold tracking-tight text-white">{info.name}</h1>
         </button>
 
-        <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-6">
+        <div className="grid grid-cols-2 gap-px border-t border-white/10 bg-white/10 sm:grid-cols-6">
           <DetailItem className="bg-black/[0.08] px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.status")}>
             <span
               className={cn(
@@ -205,15 +185,11 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
             <button
               type="button"
               className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.06] px-2.5 py-1.5 text-[10px] font-medium text-white/75 transition hover:bg-white/[0.12] hover:text-white"
-              onClick={handleCopyAssetMarkdown}
-              title={t("serverDetail.copyMarkdown")}
+              onClick={openAssetCalculator}
+              title={t("serverDetail.openCalculator")}
             >
-              {copyStatus === "copied" ? <Check className="size-3" /> : <Copy className="size-3" />}
-              {copyStatus === "copied"
-                ? t("serverDetail.copied")
-                : copyStatus === "error"
-                  ? t("serverDetail.copyFailed")
-                  : t("serverDetail.copyMarkdown")}
+              <Calculator className="size-3" />
+              {t("serverDetail.openCalculator")}
             </button>
           </div>
           {showBillingSummary && (

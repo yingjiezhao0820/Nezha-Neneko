@@ -24,6 +24,7 @@ type AssetSummaryWidgetProps = {
 }
 
 export const ASSET_SUMMARY_OPEN_EVENT = "nezha:open-asset-summary"
+export const ASSET_TRADE_OPEN_EVENT = "nezha:open-asset-trade"
 
 type BillingData = NonNullable<NonNullable<ReturnType<typeof parsePublicNote>>["billingDataMod"]>
 type FormattedServer = ReturnType<typeof formatNezhaInfo>
@@ -271,6 +272,24 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
   }, [])
 
   const items = useMemo(() => servers.map((server) => buildAssetItem(now, server, rates)), [now, rates, servers])
+
+  useEffect(() => {
+    const openAssetTrade = (event: Event) => {
+      const detail = (event as CustomEvent<{ serverId: number }>).detail
+      const item = detail ? items.find((candidate) => candidate.id === detail.serverId) : undefined
+      if (!item) return
+
+      setOpen(false)
+      setTradeDate(new Date().toISOString().slice(0, 10))
+      setTradeAmount("")
+      setCopyStatus("idle")
+      setTradeItem(item)
+    }
+
+    window.addEventListener(ASSET_TRADE_OPEN_EVENT, openAssetTrade)
+    return () => window.removeEventListener(ASSET_TRADE_OPEN_EVENT, openAssetTrade)
+  }, [items])
+
   const visibleItems = useMemo(() => {
     const filtered = excludeFree ? items.filter((item) => !item.isFree && !item.isUsageBased && !item.isFreeTagged) : items
     return sortAssetItems(filtered, sortBy)
