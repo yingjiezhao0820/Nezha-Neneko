@@ -12,6 +12,7 @@
     "region": "Región",
     "system": "Sistema Operativo",
     "cores": "Núcleos",
+    "remainingValue": "Valor restante",
     "lastActive": "Última vez activo",
     "temperature": "Temperatura",
     "bootTime": "Inicio del sistema",

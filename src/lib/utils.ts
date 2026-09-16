@@ -48,6 +48,7 @@ export function formatNezhaInfo(now: number, serverInfo: NezhaServer) {
     boot_time_string: serverInfo.host.boot_time ? dayjs(serverInfo.host.boot_time * 1000).format("YYYY-MM-DD HH:mm:ss") : "",
     platform_version: serverInfo.host.platform_version || "",
     cpu_info: serverInfo.host.cpu || [],
+    cpu_cores: Number(serverInfo.host.cpu_cores) || Number(serverInfo.host.cpu_physical_cores) || 0,
     gpu_info: serverInfo.host.gpu || [],
     load_1: serverInfo.state.load_1?.toFixed(2) || 0.0,
     load_5: serverInfo.state.load_5?.toFixed(2) || 0.0,
@@ -62,11 +63,16 @@ export function formatNezhaInfo(now: number, serverInfo: NezhaServer) {
 
 export function calcTrafficUsed(up: number, down: number, type: string): number {
   switch (type) {
-    case "max": return Math.max(up, down)
-    case "min": return Math.min(up, down)
-    case "up": return up
-    case "down": return down
-    default: return up + down
+    case "max":
+      return Math.max(up, down)
+    case "min":
+      return Math.min(up, down)
+    case "up":
+      return up
+    case "down":
+      return down
+    default:
+      return up + down
   }
 }
 
@@ -301,7 +307,9 @@ function parseChineseBillingNumeral(word: string): number | null {
 }
 
 export function parseBillingCycleDays(cycle?: string, startDate?: string, endDate?: string): number | null {
-  const raw = String(cycle || "").trim().toLowerCase()
+  const raw = String(cycle || "")
+    .trim()
+    .toLowerCase()
   const number = "([0-9]+(?:\\.[0-9]+)?)"
 
   const dayMatch = raw.match(new RegExp(`^${number}\\s*(d|day|days|天)$`))
@@ -695,9 +703,32 @@ function deriveCycleLabel(billing_cycle?: number): string {
 
 // 颜色名与 ISO 货币代码两个集合互不相交,可以共用 <...> 语法。
 const TAG_COLORS = [
-  "Gray", "Gold", "Bronze", "Brown", "Yellow", "Amber", "Orange", "Tomato",
-  "Red", "Ruby", "Crimson", "Pink", "Plum", "Purple", "Violet", "Iris",
-  "Indigo", "Blue", "Cyan", "Teal", "Jade", "Green", "Grass", "Lime", "Mint", "Sky",
+  "Gray",
+  "Gold",
+  "Bronze",
+  "Brown",
+  "Yellow",
+  "Amber",
+  "Orange",
+  "Tomato",
+  "Red",
+  "Ruby",
+  "Crimson",
+  "Pink",
+  "Plum",
+  "Purple",
+  "Violet",
+  "Iris",
+  "Indigo",
+  "Blue",
+  "Cyan",
+  "Teal",
+  "Jade",
+  "Green",
+  "Grass",
+  "Lime",
+  "Mint",
+  "Sky",
 ]
 const TAG_CURRENCIES = ["CNY", "JPY", "USD", "EUR", "GBP", "HKD", "TWD", "KRW", "SGD", "CAD", "AUD"]
 
@@ -706,9 +737,9 @@ const TAG_COLOR_REMOVE = new RegExp(`<\\s*(?:${TAG_COLORS.join("|")})\\s*>`, "ig
 const TAG_CURRENCY_EXTRACT = new RegExp(`<\\s*(${TAG_CURRENCIES.join("|")})\\s*>`, "i")
 const TAG_CURRENCY_REMOVE = new RegExp(`<\\s*(?:${TAG_CURRENCIES.join("|")})\\s*>`, "ig")
 const TAG_TRAFFIC_RESET_EXTRACT = /<\s*TRD\s*:\s*(\d{1,2})\s*>/i
-const TAG_TRAFFIC_RESET_REMOVE = /<\s*TRD\s*:\s*\d{1,2}\s*>/ig
+const TAG_TRAFFIC_RESET_REMOVE = /<\s*TRD\s*:\s*\d{1,2}\s*>/gi
 const TAG_COUNTRY_EXTRACT = /<\s*TAG\s*:\s*([A-Z]{2})\s*>/i
-const TAG_COUNTRY_REMOVE = /<\s*TAG\s*:\s*[A-Z]{2}\s*>/ig
+const TAG_COUNTRY_REMOVE = /<\s*TAG\s*:\s*[A-Z]{2}\s*>/gi
 
 // 解析 tags 字段:抽出货币、流量重置日和国旗国家码元数据(如 <JPY>、<TRD:1>、<TAG:TW>),同时返回清洗后的人类可读文本。
 export function parseTagMetadata(tags: string): { text: string; currency: string; trafficResetDay?: number; countryCode?: string } {
@@ -754,7 +785,12 @@ export function parseTagMetadata(tags: string): { text: string; currency: string
 
 export function resolveServerCountryCode(server: { country_code?: string; tags?: string }): string {
   const metadata = parseTagMetadata(typeof server.tags === "string" ? server.tags : "")
-  return metadata.countryCode || String(server.country_code || "").trim().toUpperCase()
+  return (
+    metadata.countryCode ||
+    String(server.country_code || "")
+      .trim()
+      .toUpperCase()
+  )
 }
 
 // 清洗 tags 用于显示;元标签在此被静默剥离。
@@ -810,37 +846,28 @@ function buildPublicNoteFromNode(server: any, existingPublicNote?: string): stri
     const autoRenewal: string = server?.auto_renewal === true || server?.auto_renewal === 1 || server?.auto_renewal === "1" ? "1" : "0"
     const cycle: string = deriveCycleLabel(bc) || String(bc || "")
     const currency = resolveThemeBillingCurrency(server, existing?.billingDataMod?.currency)
-    const amount: string =
-      server?.price != null && server?.price !== 0
-        ? server.price === -1
-          ? "-1"
-          : String(server.price)
-        : ""
+    const amount: string = server?.price != null && server?.price !== 0 ? (server.price === -1 ? "-1" : String(server.price)) : ""
 
     // 起止时间：优先使用 created_at/expired_at；若缺失 startDate 且存在 bc+expired_at，则回推
     const expiredRaw: string = server?.expired_at || ""
     const endDate: string =
-      expiredRaw && dayjs(expiredRaw).isValid() && dayjs(expiredRaw).diff(dayjs(), "year", true) > 100
-        ? "0000-00-00T23:59:59+08:00"
-        : expiredRaw
+      expiredRaw && dayjs(expiredRaw).isValid() && dayjs(expiredRaw).diff(dayjs(), "year", true) > 100 ? "0000-00-00T23:59:59+08:00" : expiredRaw
     // 生成 startDate；若其年份小于 0002 年，则视为未填写（置为空）
-    const startDateCandidate =
-      server?.created_at || (expiredRaw && bc ? dayjs(expiredRaw).subtract(bc, "day").toISOString() : null)
-    const startDate =
-      startDateCandidate && dayjs(startDateCandidate).isValid() && dayjs(startDateCandidate).year() < 2 ? null : startDateCandidate
+    const startDateCandidate = server?.created_at || (expiredRaw && bc ? dayjs(expiredRaw).subtract(bc, "day").toISOString() : null)
+    const startDate = startDateCandidate && dayjs(startDateCandidate).isValid() && dayjs(startDateCandidate).year() < 2 ? null : startDateCandidate
 
     // 计划/流量信息（如果 traffic_limit 为 0，则不添加流量相关信息）
     const trafficLimitNum = Number(server?.traffic_limit)
-    const hasTraffic =
-      server?.traffic_limit != null && server?.traffic_limit !== "" && !Number.isNaN(trafficLimitNum) && trafficLimitNum > 0
+    const hasTraffic = server?.traffic_limit != null && server?.traffic_limit !== "" && !Number.isNaN(trafficLimitNum) && trafficLimitNum > 0
     const trafficVol: string = hasTraffic ? formatBytes(trafficLimitNum) : ""
     const trafficTypeFromNode: string = hasTraffic ? server?.traffic_limit_type || "" : ""
-    const extraFromNode: string = existing ? "" : (
-      server?.public_remark != null && server.public_remark !== ""
+    const extraFromNode: string = existing
+      ? ""
+      : server?.public_remark != null && server.public_remark !== ""
         ? String(server.public_remark)
         : server?.tags
           ? sanitizeTags(String(server.tags))
-          : "")
+          : ""
 
     const merged = {
       billingDataMod: endDate
@@ -949,9 +976,7 @@ export const komariToNezhaWebsocketResponse = (data: any, nodes?: any): NezhaWeb
   // 立即从前端消失,而不必等 km_servers_cache 的 2 分钟 TTL 刷新;
   // statusMap 为空时(初次加载或瞬时错误)保留全部缓存,避免误删。
   const hasStatusData = statusMap.size > 0
-  const liveCache = hasStatusData
-    ? km_servers_cache.filter((server: any) => statusMap.has(server.uuid))
-    : km_servers_cache
+  const liveCache = hasStatusData ? km_servers_cache.filter((server: any) => statusMap.has(server.uuid)) : km_servers_cache
   const servers: any[] = liveCache.map((server: any) => {
     const uuid = server.uuid
     const status = statusMap.get(uuid)
@@ -967,7 +992,9 @@ export const komariToNezhaWebsocketResponse = (data: any, nodes?: any): NezhaWeb
     const host = {
       platform: server.os,
       platform_version: server.kernel_version,
-      cpu: [server.cpu_name],
+      cpu: server.cpu_name ? [server.cpu_name] : [],
+      cpu_cores: Number(server.cpu_cores) || 0,
+      cpu_physical_cores: Number(server.cpu_physical_cores) || 0,
       gpu: server.gpu_name ? [server.gpu_name] : [],
       mem_total: server.mem_total,
       disk_total: server.disk_total,
@@ -1051,7 +1078,7 @@ export const komariToNezhaWebsocketResponse = (data: any, nodes?: any): NezhaWeb
   }
 }
 
-let __nodesCache__ : any = null
+let __nodesCache__: any = null
 let __nodesCachePromise__: Promise<any> | null = null
 export const getKomariNodes = async (force = false) => {
   if (force) {
@@ -1074,9 +1101,12 @@ export const getKomariNodes = async (force = false) => {
     .then((res) => {
       __nodesCache__ = res
       // 设置 TTL 到期清理
-      setTimeout(() => {
-        __nodesCache__ = null
-      }, 2 * 60 * 1000) // 2 minutes cache
+      setTimeout(
+        () => {
+          __nodesCache__ = null
+        },
+        2 * 60 * 1000,
+      ) // 2 minutes cache
       return __nodesCache__
     })
     .catch((err) => {

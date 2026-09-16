@@ -213,7 +213,7 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
         <LiveMetric
           label="CPU"
           value={`${info.cpu.toFixed(1)}%`}
-          detail={`${info.cpu_info.length > 0 ? `${info.cpu_info.length} ${t("serverDetail.cores")}` : t("serverDetail.unknown")} · Load ${info.load_1}`}
+          detail={`${info.cpu_cores > 0 ? `${info.cpu_cores} ${t("serverDetail.cores")}` : t("serverDetail.unknown")} · Load ${info.load_1}`}
         />
         <LiveMetric
           label={t("serverDetail.mem")}

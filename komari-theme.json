@@ -219,6 +219,21 @@
                 "help": "开启后首页标准卡片和行内卡片会在鼠标悬停时轻微浮起、放大并增加阴影。"
             },
             {
+                "key": "EnableRemainingValueRotation",
+                "name": "轮播剩余价值",
+                "type": "switch",
+                "default": false,
+                "help": "开启后首页服务器卡片会在剩余天数与剩余价值之间循环切换，默认关闭。"
+            },
+            {
+                "key": "RemainingValueRotationInterval",
+                "name": "剩余价值轮播间隔",
+                "type": "select",
+                "options": "2,3,5,8,10,15,20,30,45,60",
+                "default": "5",
+                "help": "设置剩余天数与剩余价值的切换间隔，单位为秒；仅在开启轮播剩余价值后生效。"
+            },
+            {
                 "key": "FixedTopServerName",
                 "name": "固定顶部服务器名称",
                 "type": "switch",

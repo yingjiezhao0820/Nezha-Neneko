@@ -37,6 +37,7 @@
     "region": "Region",
     "system": "System",
     "cores": "Kerne",
+    "remainingValue": "Restwert",
     "lastActive": "Letzte Aktivität",
     "temperature": "Temperatur"
   },

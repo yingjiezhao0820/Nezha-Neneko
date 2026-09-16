@@ -89,6 +89,8 @@ npm run build
 | `CardGlassColor`                 | 设置通用毛玻璃卡片颜色，支持白色                             |
 | `CardGlassOpacity`               | 设置首页和详情卡片背景透明度                                 |
 | `EnableServerCardHoverAnimation` | 开启首页服务器卡片浮起、缩放和阴影动画，默认关闭             |
+| `EnableRemainingValueRotation`   | 在首页卡片轮播剩余天数与剩余价值，默认关闭                   |
+| `RemainingValueRotationInterval` | 设置剩余价值轮播间隔，单位为秒                               |
 | `ShowGroupBar`                   | 控制首页地图、服务、布局、分组和排序整栏                     |
 | `ForceCardInline`                | 启用紧凑行内卡片布局                                         |
 | `ShowServerTags`                 | 显示或隐藏服务器可见标签                                     |
