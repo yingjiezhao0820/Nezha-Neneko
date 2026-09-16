@@ -61,7 +61,7 @@ jobs:
           fi
 
           CLEAN_VERSION="${RAW_TAG#v}"
-          ZIP_NAME="nezha-BITJEBE-${RAW_TAG}.zip"
+          ZIP_NAME="Nezha-Neneko-${RAW_TAG}.zip"
 
           echo "release_tag=${RAW_TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${CLEAN_VERSION}" >> "$GITHUB_OUTPUT"
@@ -139,7 +139,7 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nezha-BITJEBE-${{ steps.meta.outputs.release_tag }}
+          name: Nezha-Neneko-${{ steps.meta.outputs.release_tag }}
           path: ${{ steps.package.outputs.package_path }}
           if-no-files-found: error
           retention-days: 30
@@ -148,7 +148,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.release_tag }}
-          name: nezha-BITJEBE ${{ steps.meta.outputs.release_tag }}
+          name: Nezha-Neneko ${{ steps.meta.outputs.release_tag }}
           generate_release_notes: true
           make_latest: true
           files: ${{ steps.package.outputs.package_path }}

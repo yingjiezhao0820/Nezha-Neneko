@@ -1,4 +1,4 @@
-# nezha-BITJEBE-fix
+# Nezha-Neneko
 
 [![Build and Release Theme](https://github.com/yingjiezhao0820/nezha-BITJEBE/actions/workflows/release.yml/badge.svg)](https://github.com/yingjiezhao0820/nezha-BITJEBE/actions/workflows/release.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/yingjiezhao0820/nezha-BITJEBE)](https://github.com/yingjiezhao0820/nezha-BITJEBE/releases)
@@ -157,7 +157,7 @@ npm run format     # 使用 Prettier 格式化代码
 1. 根据标签更新主题版本号。
 2. 安装依赖并构建项目。
 3. 校验主题清单和主题包目录结构。
-4. 生成 `nezha-BITJEBE-<tag>.zip`。
+4. 生成 `Nezha-Neneko-<tag>.zip`。
 5. 创建或更新 GitHub Release 并上传主题包。
 
 示例：
