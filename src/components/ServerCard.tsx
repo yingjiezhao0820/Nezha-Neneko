@@ -1,7 +1,7 @@
 import ServerFlag from "@/components/ServerFlag"
 import ServerUsageBar from "@/components/ServerUsageBar"
 import TrafficBar from "@/components/TrafficBar"
-import { formatBytes } from "@/lib/format"
+import { formatBytes, formatTransferSpeed } from "@/lib/format"
 import { GetFontLogoClass, GetOsName, MageMicrosoftWindows } from "@/lib/logo-class"
 import { cn, calcTrafficUsed, formatNezhaInfo, parsePublicNote } from "@/lib/utils"
 import { NezhaServer } from "@/types/nezha-api"
@@ -28,11 +28,12 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
 
   const showFlag = true
 
-  // @ts-expect-error ShowNetTransfer is a global variable
-  const showNetTransfer = window.ShowNetTransfer as boolean
-
-  // @ts-expect-error FixedTopServerName is a global variable
-  const fixedTopServerName = window.FixedTopServerName as boolean
+  const themeSettings = window as unknown as Record<string, unknown>
+  const showNetTransfer = themeSettings.ShowNetTransfer === true
+  const fixedTopServerName = themeSettings.FixedTopServerName === true
+  const showTrafficBar = traffic_limit > 0 && themeSettings.ShowTrafficBar !== false
+  const trafficBarInMetricRow = showTrafficBar && themeSettings.TrafficBarInMetricRow === true
+  const trafficUsed = calcTrafficUsed(net_out_transfer, net_in_transfer, traffic_limit_type)
 
   const parsedData = parsePublicNote(public_note)
 
@@ -111,26 +112,35 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
             <div className="flex items-center text-xs font-semibold">{stg.toFixed(2)}%</div>
             <ServerUsageBar value={stg} />
           </div>
-          <div className={"flex w-14 flex-col"}>
-            <p className="text-xs text-muted-foreground">{t("serverCard.upload")}</p>
-            <div className="flex items-center text-xs font-semibold">
-              {up >= 1024 ? `${(up / 1024).toFixed(2)}G/s` : up >= 1 ? `${up.toFixed(2)}M/s` : `${(up * 1024).toFixed(2)}K/s`}
-            </div>
-          </div>
-          <div className={"flex w-14 flex-col"}>
-            <p className="text-xs text-muted-foreground">{t("serverCard.download")}</p>
-            <div className="flex items-center text-xs font-semibold">
-              {down >= 1024 ? `${(down / 1024).toFixed(2)}G/s` : down >= 1 ? `${down.toFixed(2)}M/s` : `${(down * 1024).toFixed(2)}K/s`}
-            </div>
-          </div>
+          {trafficBarInMetricRow ? (
+            <>
+              <div className="flex w-14 flex-col">
+                <p className="text-xs text-muted-foreground">{t("serverCard.trafficUsage", "流量")}</p>
+                <TrafficBar compact used={trafficUsed} limit={traffic_limit} resetDay={traffic_reset_day} limitType={traffic_limit_type} />
+              </div>
+              <div className="flex w-14 flex-col">
+                <p className="text-xs text-muted-foreground">{t("serverCard.networkSpeed", "网速")}</p>
+                <div className="grid text-[9px] font-semibold leading-[11px]">
+                  <span className="whitespace-nowrap">↑{formatTransferSpeed(up, 1)}</span>
+                  <span className="whitespace-nowrap">↓{formatTransferSpeed(down, 1)}</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex w-14 flex-col">
+                <p className="text-xs text-muted-foreground">{t("serverCard.upload")}</p>
+                <div className="flex items-center text-xs font-semibold">{formatTransferSpeed(up)}</div>
+              </div>
+              <div className="flex w-14 flex-col">
+                <p className="text-xs text-muted-foreground">{t("serverCard.download")}</p>
+                <div className="flex items-center text-xs font-semibold">{formatTransferSpeed(down)}</div>
+              </div>
+            </>
+          )}
         </section>
-        {traffic_limit > 0 && (window as unknown as Record<string, unknown>).ShowTrafficBar !== false && (
-          <TrafficBar
-            used={calcTrafficUsed(net_out_transfer, net_in_transfer, traffic_limit_type)}
-            limit={traffic_limit}
-            resetDay={traffic_reset_day}
-            limitType={traffic_limit_type}
-          />
+        {showTrafficBar && !trafficBarInMetricRow && (
+          <TrafficBar used={trafficUsed} limit={traffic_limit} resetDay={traffic_reset_day} limitType={traffic_limit_type} />
         )}
         {showNetTransfer && (
           <section className={"flex items-center w-full justify-between gap-1"}>

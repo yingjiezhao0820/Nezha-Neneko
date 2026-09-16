@@ -33,6 +33,8 @@
     "hours": "小时",
     "upload": "上传",
     "download": "下载",
+    "networkSpeed": "网速",
+    "trafficUsage": "流量",
     "system": "系统",
     "uptime": "运行时间",
     "totalUpload": "总上传",

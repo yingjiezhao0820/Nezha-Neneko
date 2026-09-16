@@ -147,6 +147,14 @@
                 "help": "资产卡片浮窗的主色调，亮/暗模式自动配套。"
             },
             {
+                "key": "AssetCardOpacity",
+                "name": "资产弹窗透明度",
+                "type": "select",
+                "options": "20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95",
+                "default": "65",
+                "help": "单独控制资产统计面板和服务器交易弹窗的背景透明度，不影响其他卡片。"
+            },
+            {
                 "key": "AssetCardDefaultCurrency",
                 "name": "资产卡片默认币种",
                 "type": "select",
@@ -246,6 +254,13 @@
             {
                 "name": "流量进度条设置",
                 "type": "title"
+            },
+            {
+                "key": "TrafficBarInMetricRow",
+                "name": "流量条嵌入指标栏",
+                "type": "switch",
+                "default": false,
+                "help": "开启后将实时上传/下载合并为“网速”格，并把“流量”进度放入释放出的指标格；关闭时继续在卡片底部显示完整流量条。"
             },
             {
                 "key": "TrafficBarShowPercent",

@@ -33,6 +33,8 @@
     "hours": "Hours",
     "upload": "Upload",
     "download": "Download",
+    "networkSpeed": "Net speed",
+    "trafficUsage": "Traffic",
     "system": "System",
     "uptime": "Uptime",
     "totalUpload": "Upload",

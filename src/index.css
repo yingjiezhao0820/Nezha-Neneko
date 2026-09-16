@@ -99,16 +99,19 @@
   }
 }
 
-@layer components {
-  .glass-card {
-    background-color: rgb(var(--glass-card-rgb, 15 23 42) / var(--glass-card-opacity, 0.35));
-  }
+.glass-card {
+  background-color: rgb(var(--glass-card-rgb, 15 23 42) / var(--glass-card-opacity, 0.35));
+}
 
-  .glass-card-interactive:hover {
-    background-color: rgb(var(--glass-card-rgb, 15 23 42) / var(--glass-card-hover-opacity, 0.45));
-  }
+.glass-card-interactive:hover {
+  background-color: rgb(var(--glass-card-rgb, 15 23 42) / var(--glass-card-hover-opacity, 0.45));
+}
 
-  .asset-glass {
+.glass-card.asset-glass {
+  background-color: rgb(var(--glass-card-rgb, 15 23 42) / var(--asset-card-opacity, 0.65));
+}
+
+.asset-glass {
     color: rgb(255 255 255);
   }
 
@@ -151,7 +154,6 @@
     background-color: rgb(var(--glass-card-rgb, 15 23 42));
     color: rgb(255 255 255);
   }
-}
 
 @layer utilities {
   .step {

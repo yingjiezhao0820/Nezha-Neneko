@@ -33,6 +33,8 @@
     "hours": "小時",
     "upload": "上傳",
     "download": "下載",
+    "networkSpeed": "網速",
+    "trafficUsage": "流量",
     "system": "系統",
     "uptime": "運行時間",
     "totalUpload": "總上傳",

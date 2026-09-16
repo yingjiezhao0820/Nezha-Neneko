@@ -9,3 +9,10 @@ export function formatBytes(bytes: number, decimals: number = 2) {
 
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
 }
+
+export function formatTransferSpeed(value: number, decimals: number = 2): string {
+  const safeValue = Number.isFinite(value) ? Math.max(0, value) : 0
+  if (safeValue >= 1024) return `${(safeValue / 1024).toFixed(decimals)}G/s`
+  if (safeValue >= 1) return `${safeValue.toFixed(decimals)}M/s`
+  return `${(safeValue * 1024).toFixed(decimals)}K/s`
+}

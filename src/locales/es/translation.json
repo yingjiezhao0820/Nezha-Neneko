@@ -73,6 +73,8 @@
     "hours": "Horas",
     "upload": "Subida",
     "download": "Bajada",
+    "networkSpeed": "Red",
+    "trafficUsage": "Tráfico",
     "system": "Sistema operativo",
     "uptime": "Tiempo de actividad",
     "totalUpload": "Subida",

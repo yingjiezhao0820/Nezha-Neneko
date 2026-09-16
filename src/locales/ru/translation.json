@@ -17,6 +17,8 @@
     "hours": "Часов",
     "uptime": "Аптайм",
     "download": "Скачать",
+    "networkSpeed": "Сеть",
+    "trafficUsage": "Трафик",
     "mem": "MEM",
     "stg": "STG",
     "upload": "Загрузка",

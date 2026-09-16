@@ -6,6 +6,7 @@ interface TrafficBarProps {
   limit: number
   resetDay?: number
   limitType: string
+  compact?: boolean
 }
 
 function getMonthlyResetDate(now: Date, day: number): Date {
@@ -40,7 +41,7 @@ function getColor(percent: number): string {
   return `hsl(${(100 - percent) * 1.4}, 70%, 50%)`
 }
 
-export default function TrafficBar({ used, limit, resetDay, limitType }: TrafficBarProps) {
+export default function TrafficBar({ used, limit, resetDay, limitType, compact = false }: TrafficBarProps) {
   const [infoIndex, setInfoIndex] = useState(0)
   const [fading, setFading] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -62,7 +63,7 @@ export default function TrafficBar({ used, limit, resetDay, limitType }: Traffic
   if (showResetDay) infoItems.push(`流量重置: ${resetDays}`)
   if (showBillingMode) infoItems.push(`计费: ${getTypeLabel(limitType)}`)
 
-  const shouldCycle = infoItems.length > 1
+  const shouldCycle = !compact && infoItems.length > 1
 
   useEffect(() => {
     if (!shouldCycle) {
@@ -83,6 +84,24 @@ export default function TrafficBar({ used, limit, resetDay, limitType }: Traffic
   }, [shouldCycle, infoItems.length])
 
   if (limit <= 0) return null
+
+  if (compact) {
+    return (
+      <div className="w-full" title={`${usedFormatted} / ${limitFormatted}`}>
+        <div className="flex items-center text-xs font-semibold">{percent.toFixed(1)}%</div>
+        <div className="relative h-[3px] w-full">
+          <div className="absolute inset-0 rounded-sm bg-white/10" />
+          <div
+            className="absolute inset-0 rounded-sm transition-all duration-300"
+            style={{
+              width: `${percentStr}%`,
+              backgroundColor: getColor(percent),
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-1.5 w-full">

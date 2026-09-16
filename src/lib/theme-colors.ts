@@ -27,6 +27,7 @@ type GlassCardStyle = CSSProperties & {
   "--glass-card-rgb": string
   "--glass-card-opacity": string
   "--glass-card-hover-opacity": string
+  "--asset-card-opacity": string
 }
 
 export function resolveGlassCardStyle(settings: Record<string, unknown>): GlassCardStyle {
@@ -34,11 +35,14 @@ export function resolveGlassCardStyle(settings: Record<string, unknown>): GlassC
   const opacitySetting = Number(settings.CardGlassOpacity)
   const opacityPercent = Number.isFinite(opacitySetting) ? Math.min(80, Math.max(15, opacitySetting)) : 35
   const opacity = opacityPercent / 100
+  const assetOpacitySetting = Number(settings.AssetCardOpacity)
+  const assetOpacityPercent = Number.isFinite(assetOpacitySetting) ? Math.min(95, Math.max(20, assetOpacitySetting)) : 65
 
   return {
     "--glass-card-rgb": GLASS_CARD_COLORS[colorKey] || GLASS_CARD_COLORS.slate,
     "--glass-card-opacity": String(opacity),
     "--glass-card-hover-opacity": String(Math.min(0.9, opacity + 0.1)),
+    "--asset-card-opacity": String(assetOpacityPercent / 100),
   }
 }
 

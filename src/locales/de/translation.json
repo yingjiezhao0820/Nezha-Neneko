@@ -12,6 +12,8 @@
     "mem": "MEM",
     "upload": "Upload",
     "download": "Download",
+    "networkSpeed": "Netzrate",
+    "trafficUsage": "Traffic",
     "system": "System",
     "stg": "STG",
     "totalDownload": "Download",
