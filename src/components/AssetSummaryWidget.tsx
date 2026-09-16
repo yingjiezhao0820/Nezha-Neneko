@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react"
 
 import { buildMarkdownTable, copyTextToClipboard } from "@/lib/clipboard"
 import { formatBytes } from "@/lib/format"
-import { ASSET_COLORS, resolveThemeColor } from "@/lib/theme-colors"
+import { ASSET_COLORS, resolveAssetColor } from "@/lib/theme-colors"
 import {
   calcTrafficUsed,
   calculateRemainingBillingValue,
@@ -267,7 +267,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
   }, [])
 
   const palette = useMemo(() => {
-    const colorKey = resolveThemeColor((window as unknown as Record<string, unknown>).AssetCardColor)
+    const colorKey = resolveAssetColor((window as unknown as Record<string, unknown>).AssetCardColor)
     return ASSET_COLORS[colorKey]
   }, [])
 

@@ -11,6 +11,9 @@ export type ThemeColorKey = "blue" | "green" | "purple" | "pink" | "orange" | "r
 
 export const THEME_COLOR_KEYS: ThemeColorKey[] = ["blue", "green", "purple", "pink", "orange", "red", "cyan", "amber"]
 
+export type AssetColorKey = ThemeColorKey | "black" | "white"
+export const ASSET_COLOR_KEYS: AssetColorKey[] = [...THEME_COLOR_KEYS, "black", "white"]
+
 const GLASS_CARD_COLORS: Record<string, string> = {
   slate: "15 23 42",
   neutral: "23 23 23",
@@ -49,6 +52,11 @@ export function resolveGlassCardStyle(settings: Record<string, unknown>): GlassC
 export function resolveThemeColor(value: unknown, fallback: ThemeColorKey = "blue"): ThemeColorKey {
   const normalized = typeof value === "string" ? value.trim().toLowerCase() : ""
   return (THEME_COLOR_KEYS as string[]).includes(normalized) ? (normalized as ThemeColorKey) : fallback
+}
+
+export function resolveAssetColor(value: unknown, fallback: AssetColorKey = "blue"): AssetColorKey {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase() : ""
+  return (ASSET_COLOR_KEYS as string[]).includes(normalized) ? (normalized as AssetColorKey) : fallback
 }
 
 // 访客胶囊用色板
@@ -144,7 +152,7 @@ export interface AssetColorClasses {
   focusInput: string
 }
 
-export const ASSET_COLORS: Record<ThemeColorKey, AssetColorClasses> = {
+export const ASSET_COLORS: Record<AssetColorKey, AssetColorClasses> = {
   blue: {
     triggerText: "text-blue-700 dark:text-blue-300",
     panelTitle: "text-blue-700 dark:text-blue-300",
@@ -200,5 +208,19 @@ export const ASSET_COLORS: Record<ThemeColorKey, AssetColorClasses> = {
     primaryText: "text-amber-700 dark:text-amber-300",
     hoverPrimary: "hover:text-amber-600",
     focusInput: "focus:border-amber-400 focus:ring-amber-300/50",
+  },
+  black: {
+    triggerText: "text-black dark:text-zinc-300",
+    panelTitle: "text-black dark:text-zinc-300",
+    primaryText: "text-black dark:text-zinc-300",
+    hoverPrimary: "hover:text-zinc-600 dark:hover:text-zinc-100",
+    focusInput: "focus:border-black focus:ring-black/30 dark:focus:border-zinc-400 dark:focus:ring-zinc-300/30",
+  },
+  white: {
+    triggerText: "text-white",
+    panelTitle: "text-white",
+    primaryText: "text-white",
+    hoverPrimary: "hover:text-white/80",
+    focusInput: "focus:border-white focus:ring-white/30",
   },
 }
