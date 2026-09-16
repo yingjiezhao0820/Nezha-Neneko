@@ -2,12 +2,12 @@ import { ASSET_SUMMARY_OPEN_EVENT } from "@/components/AssetSummaryWidget"
 import CurrentTime from "@/components/CurrentTime"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useOnlineVisitorCount } from "@/hooks/use-online-visitor-count"
 import { useWebSocketContext } from "@/hooks/use-websocket-context"
 import { fetchSetting } from "@/lib/nezha-api"
-import { formatNezhaInfo } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { AnimatePresence, m } from "framer-motion"
-import { CircleDollarSign } from "lucide-react"
+import { CircleDollarSign, LogIn } from "lucide-react"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -27,8 +27,10 @@ function Header() {
     refetchOnWindowFocus: true,
   })
 
-  const { lastMessage, connected } = useWebSocketContext()
-  const onlineCount = lastMessage ? lastMessage.servers.filter((server) => formatNezhaInfo(lastMessage.now, server).online).length : null
+  const themeSettings = window as unknown as Record<string, unknown>
+  const showAssetCard = themeSettings.ShowAssetCard === true
+  const showOnlineVisitorCount = themeSettings.ShowOnlineVisitorCount === true
+  const { onlineCount, isAvailable: isOnlineCountAvailable } = useOnlineVisitorCount(showOnlineVisitorCount)
 
   const siteName = settingData?.data?.config?.site_name
 
@@ -36,7 +38,6 @@ function Header() {
   const customLogo = window.CustomLogo || "/favicon.ico"
 
   const customDesc = settingData?.data?.config?.site_desc || (window as any).CustomDesc || "Komari Monitor"
-  const showAssetCard = (window as unknown as Record<string, unknown>).ShowAssetCard === true
 
   useEffect(() => {
     const link = document.querySelector("link[rel*='icon']") || document.createElement("link")
@@ -95,19 +96,36 @@ function Header() {
             </Button>
           )}
           <LanguageSwitcher />
-          <div
-            role="status"
-            aria-live="polite"
-            title={`${onlineCount ?? "..."} ${t("online")}`}
-            className="glass-card flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 px-3 text-[11px] font-medium text-white shadow-none backdrop-blur-md"
-          >
-            <span className="font-semibold tabular-nums">{onlineCount ?? "..."}</span>
-            <span>{t("online")}</span>
-            <span
-              aria-hidden="true"
-              className={`size-1.5 rounded-full ${connected && lastMessage ? "bg-emerald-400 shadow-[0_0_7px_rgba(52,211,153,0.9)]" : "bg-white/35"}`}
-            />
-          </div>
+          {showOnlineVisitorCount ? (
+            <a
+              href="/admin"
+              target="_blank"
+              rel="noreferrer"
+              title={t("login")}
+              aria-label={`${onlineCount ?? "..."} ${t("online")} · ${t("login")}`}
+              className="glass-card glass-card-interactive flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 px-3 text-[11px] font-medium text-white shadow-none backdrop-blur-md hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+            >
+              <span role="status" aria-live="polite" className="contents">
+                <span className="font-semibold tabular-nums">{onlineCount ?? "..."}</span>
+                <span>{t("online")}</span>
+                <span
+                  aria-hidden="true"
+                  className={`size-1.5 rounded-full ${isOnlineCountAvailable ? "bg-emerald-400 shadow-[0_0_7px_rgba(52,211,153,0.9)]" : "bg-white/35"}`}
+                />
+              </span>
+            </a>
+          ) : (
+            <a href="/admin" target="_blank" rel="noreferrer" aria-label={t("login")}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="glass-card glass-card-interactive rounded-full border-white/10 px-[9px] text-white shadow-none backdrop-blur-md hover:text-white"
+                title={t("login")}
+              >
+                <LogIn className="size-4" />
+              </Button>
+            </a>
+          )}
         </section>
       </section>
       <div className="w-full flex justify-between sm:hidden mt-1">

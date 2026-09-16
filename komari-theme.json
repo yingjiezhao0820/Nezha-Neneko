@@ -117,6 +117,13 @@
                 "help": "开启后在页面底部短暂显示访客 IP、地区和运营商信息。"
             },
             {
+                "key": "ShowOnlineVisitorCount",
+                "name": "显示在线访客人数",
+                "type": "switch",
+                "default": false,
+                "help": "开启后右上角显示当前在线访客人数并每 45 秒刷新；关闭时显示登录图标。两种状态均可点击进入后台登录。"
+            },
+            {
                 "key": "ShowGroupBar",
                 "name": "显示首页分组栏",
                 "type": "switch",
