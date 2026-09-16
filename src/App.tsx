@@ -8,6 +8,7 @@ import { DashCommand } from "./components/DashCommand"
 import ErrorBoundary from "./components/ErrorBoundary"
 import Header, { RefreshToast } from "./components/Header"
 import PrivateAccessGate from "./components/PrivateAccessGate"
+import VisitorAuditReporter from "./components/VisitorAuditReporter"
 import { useBackground } from "./hooks/use-background"
 import { useTheme } from "./hooks/use-theme"
 import { useWebSocketContext } from "./hooks/use-websocket-context"
@@ -127,6 +128,7 @@ const MainApp: React.FC = () => {
 const App: React.FC = () => {
   return (
     <Router basename={import.meta.env.BASE_URL}>
+      <VisitorAuditReporter />
       <RouteChecker />
     </Router>
   )

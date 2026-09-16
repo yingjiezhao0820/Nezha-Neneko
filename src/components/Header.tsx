@@ -4,9 +4,10 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useWebSocketContext } from "@/hooks/use-websocket-context"
 import { fetchSetting } from "@/lib/nezha-api"
+import { formatNezhaInfo } from "@/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { AnimatePresence, m } from "framer-motion"
-import { CircleDollarSign, LogIn } from "lucide-react"
+import { CircleDollarSign } from "lucide-react"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -26,9 +27,8 @@ function Header() {
     refetchOnWindowFocus: true,
   })
 
-  //const { lastMessage, connected } = useWebSocketContext()
-
-  //const onlineCount = connected ? (lastMessage ? JSON.parse(lastMessage.data).online || 0 : 0) : "..."
+  const { lastMessage, connected } = useWebSocketContext()
+  const onlineCount = lastMessage ? lastMessage.servers.filter((server) => formatNezhaInfo(lastMessage.now, server).online).length : null
 
   const siteName = settingData?.data?.config?.site_name
 
@@ -95,16 +95,19 @@ function Header() {
             </Button>
           )}
           <LanguageSwitcher />
-          <a href="/admin" target="_blank" rel="noreferrer">
-            <Button
-              variant="outline"
-              size="sm"
-              className="glass-card glass-card-interactive rounded-full border-white/10 px-[9px] text-white shadow-none backdrop-blur-md hover:text-white"
-              title={t("login")}
-            >
-              <LogIn className="size-4" />
-            </Button>
-          </a>
+          <div
+            role="status"
+            aria-live="polite"
+            title={`${onlineCount ?? "..."} ${t("online")}`}
+            className="glass-card flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 px-3 text-[11px] font-medium text-white shadow-none backdrop-blur-md"
+          >
+            <span className="font-semibold tabular-nums">{onlineCount ?? "..."}</span>
+            <span>{t("online")}</span>
+            <span
+              aria-hidden="true"
+              className={`size-1.5 rounded-full ${connected && lastMessage ? "bg-emerald-400 shadow-[0_0_7px_rgba(52,211,153,0.9)]" : "bg-white/35"}`}
+            />
+          </div>
         </section>
       </section>
       <div className="w-full flex justify-between sm:hidden mt-1">
