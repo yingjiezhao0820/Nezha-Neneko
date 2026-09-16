@@ -13,7 +13,7 @@ export function ServerDetailChartLoading() {
 export function ServerDetailLoading() {
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl border border-white/10 bg-neutral-900/45 px-5 py-4 backdrop-blur-md sm:px-6">
+      <section className="glass-card rounded-2xl border border-white/10 px-5 py-4 backdrop-blur-md sm:px-6">
         <Skeleton className="h-6 w-36 animate-none bg-white/10" />
         <div className="mt-4 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
           {Array.from({ length: 6 }, (_, index) => (
@@ -25,7 +25,7 @@ export function ServerDetailLoading() {
         </div>
         <Skeleton className="mt-4 h-12 w-full animate-none bg-white/10" />
       </section>
-      <section className="grid grid-cols-2 overflow-hidden rounded-lg border border-white/10 bg-neutral-900/45 sm:grid-cols-3 lg:grid-cols-6">
+      <section className="glass-card grid grid-cols-2 overflow-hidden rounded-lg border border-white/10 sm:grid-cols-3 lg:grid-cols-6">
         {Array.from({ length: 6 }, (_, index) => (
           <Skeleton key={index} className="h-[68px] animate-none rounded-none border-r border-white/10 bg-white/5" />
         ))}

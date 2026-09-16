@@ -32,7 +32,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
           onClick={() => {
             setStatus("all")
           }}
-          className="cursor-pointer rounded-2xl border-white/10 bg-neutral-900/45 text-white shadow-none backdrop-blur-md transition-colors hover:border-blue-500 hover:bg-neutral-900/55"
+          className="glass-card glass-card-interactive cursor-pointer rounded-2xl border-white/10 text-white shadow-none backdrop-blur-md transition-colors hover:border-blue-500"
         >
           <CardContent className="flex h-full items-center px-6 py-3">
             <section className="flex flex-col gap-1">
@@ -51,7 +51,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
             setStatus("online")
           }}
           className={cn(
-            "cursor-pointer rounded-2xl border-white/10 bg-neutral-900/45 text-white shadow-none backdrop-blur-md ring-1 ring-transparent transition-all hover:bg-neutral-900/55 hover:ring-green-500",
+            "glass-card glass-card-interactive cursor-pointer rounded-2xl border-white/10 text-white shadow-none backdrop-blur-md ring-1 ring-transparent transition-all hover:ring-green-500",
             {
               "border-transparent ring-2 ring-green-500": status === "online",
             },
@@ -76,7 +76,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
             setStatus("offline")
           }}
           className={cn(
-            "cursor-pointer rounded-2xl border-white/10 bg-neutral-900/45 text-white shadow-none backdrop-blur-md ring-1 ring-transparent transition-all hover:bg-neutral-900/55 hover:ring-red-500",
+            "glass-card glass-card-interactive cursor-pointer rounded-2xl border-white/10 text-white shadow-none backdrop-blur-md ring-1 ring-transparent transition-all hover:ring-red-500",
             {
               "border-transparent ring-2 ring-red-500": status === "offline",
             },
@@ -96,7 +96,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
           </CardContent>
         </Card>
         <Card
-          className="rounded-2xl border-white/10 bg-neutral-900/45 text-white shadow-none backdrop-blur-md ring-1 ring-transparent transition-all hover:bg-neutral-900/55 hover:ring-purple-500"
+          className="glass-card glass-card-interactive rounded-2xl border-white/10 text-white shadow-none backdrop-blur-md ring-1 ring-transparent transition-all hover:ring-purple-500"
         >
           <CardContent className="flex h-full items-center relative px-6 py-3">
             <section className="flex flex-col gap-1 w-full">

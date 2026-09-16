@@ -100,7 +100,7 @@
                 "name": "使用SVG国旗",
                 "type": "switch",
                 "default": false,
-                "help": "开启后使用SVG国旗图标替代Emoji国旗，在部分系统上显示效果更好。"
+                "help": "开启后使用SVG国旗图标替代Emoji国旗。在 Komari 节点 tags 中添加 <TAG:TW> 可覆盖节点国家并显示台湾地区旗帜，其他地区请填写两位国家或地区代码。"
             },
             {
                 "key": "ShowTrafficBar",
@@ -164,6 +164,22 @@
             {
                 "name": "卡片显示设置",
                 "type": "title"
+            },
+            {
+                "key": "CardGlassColor",
+                "name": "卡片毛玻璃颜色",
+                "type": "select",
+                "options": "slate,neutral,zinc,gray,black,blue,indigo,purple,emerald",
+                "default": "slate",
+                "help": "设置首页、详情页及资产卡片的毛玻璃背景色。"
+            },
+            {
+                "key": "CardGlassOpacity",
+                "name": "卡片背景透明度",
+                "type": "select",
+                "options": "15,20,25,30,35,40,45,50,55,60,70,80",
+                "default": "35",
+                "help": "数值越小越透明、越轻盈；数值越大背景颜色越明显。"
             },
             {
                 "key": "FixedTopServerName",

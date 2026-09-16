@@ -39,7 +39,7 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
   return online ? (
     <Card
       className={cn(
-        "flex cursor-pointer flex-col items-center justify-start gap-3 rounded-2xl border-white/10 bg-neutral-900/45 p-3 text-white shadow-none backdrop-blur-md transition-colors hover:bg-neutral-900/55 md:px-5 [&_.text-muted-foreground]:text-white/55",
+        "glass-card glass-card-interactive flex cursor-pointer flex-col items-center justify-start gap-3 rounded-2xl border-white/10 p-3 text-white shadow-none backdrop-blur-md transition-colors md:px-5 [&_.text-muted-foreground]:text-white/55",
         {
           "flex-col": fixedTopServerName,
           "lg:flex-row": !fixedTopServerName,
@@ -154,7 +154,7 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
   ) : (
     <Card
       className={cn(
-        "flex cursor-pointer flex-col items-center justify-start gap-3 rounded-2xl border-white/10 bg-neutral-900/45 p-3 text-white shadow-none backdrop-blur-md transition-colors hover:bg-neutral-900/55 sm:gap-0 md:px-5 [&_.text-muted-foreground]:text-white/55",
+        "glass-card glass-card-interactive flex cursor-pointer flex-col items-center justify-start gap-3 rounded-2xl border-white/10 p-3 text-white shadow-none backdrop-blur-md transition-colors sm:gap-0 md:px-5 [&_.text-muted-foreground]:text-white/55",
         showNetTransfer ? "min-h-[123px] lg:min-h-[91px]" : "min-h-[93px] lg:min-h-[61px]",
         {
           "flex-col": fixedTopServerName,

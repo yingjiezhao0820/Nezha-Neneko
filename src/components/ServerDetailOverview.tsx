@@ -64,7 +64,7 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
 
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl border border-white/10 bg-neutral-900/45 px-5 py-4 shadow-none backdrop-blur-md sm:px-6">
+      <section className="glass-card rounded-2xl border border-white/10 px-5 py-4 shadow-none backdrop-blur-md sm:px-6">
         <button type="button" onClick={goBack} className="flex items-center gap-1.5 text-left">
           <BackIcon />
           <h1 className="max-w-[70vw] truncate text-xl font-semibold tracking-tight text-white">{info.name}</h1>
@@ -116,7 +116,7 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
         </div>
       </section>
 
-      <section className="grid overflow-hidden rounded-lg border border-white/10 bg-neutral-900/45 backdrop-blur-md grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+      <section className="glass-card grid grid-cols-2 overflow-hidden rounded-lg border border-white/10 backdrop-blur-md sm:grid-cols-3 lg:grid-cols-6">
         <LiveMetric label="CPU" value={`${info.cpu.toFixed(1)}%`} detail={`Load ${info.load_1}`} />
         <LiveMetric
           label={t("serverDetail.mem")}

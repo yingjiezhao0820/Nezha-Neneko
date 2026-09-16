@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function NetworkChartLoading() {
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/45 backdrop-blur-md">
+    <section className="glass-card overflow-hidden rounded-2xl border border-white/10 backdrop-blur-md">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         {Array.from({ length: 10 }, (_, index) => (
           <div className="-mr-px space-y-2 border-b border-r border-white/10 px-4 py-3" key={index}>

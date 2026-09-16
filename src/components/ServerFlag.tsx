@@ -32,11 +32,12 @@ export default function ServerFlag({ country_code, className }: { country_code: 
     checkEmojiSupport()
   }, [])
 
-  if (!country_code) return null
+  const normalizedCountryCode = country_code.trim().toUpperCase()
+  if (!/^[A-Z]{2}$/.test(normalizedCountryCode)) return null
 
   return (
     <span className={cn("text-[12px] text-muted-foreground", className)}>
-      {forceUseSvgFlag || !supportsEmojiFlags ? <span className={`fi fi-${country_code}`} /> : getUnicodeFlagIcon(country_code)}
+      {forceUseSvgFlag || !supportsEmojiFlags ? <span className={`fi fi-${normalizedCountryCode.toLowerCase()}`} /> : getUnicodeFlagIcon(normalizedCountryCode)}
     </span>
   )
 }

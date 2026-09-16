@@ -114,14 +114,14 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
 
   if (!monitorData.success || monitors.length === 0) {
     return (
-      <section className="flex min-h-40 items-center justify-center rounded-2xl border border-white/10 bg-neutral-900/45 backdrop-blur-md">
+      <section className="glass-card flex min-h-40 items-center justify-center rounded-2xl border border-white/10 backdrop-blur-md">
         <p className="text-sm font-medium text-white/60">{t("monitor.noData", "该服务器未配置延迟检测")}</p>
       </section>
     )
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/45 shadow-none backdrop-blur-md">
+    <section className="glass-card overflow-hidden rounded-2xl border border-white/10 shadow-none backdrop-blur-md">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         {monitors.map((monitor) => {
           const isActive = selectedMonitorIds === null || selectedMonitorIds.has(monitor.monitor_id)

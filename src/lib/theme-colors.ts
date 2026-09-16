@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react"
+
 // 主题色板:用于访客胶囊和资产卡片的"主色"下拉框配置。
 //
 // Tailwind JIT 通过扫描源码字面量来识别 class,所以这里必须把完整 class 字符串
@@ -8,6 +10,37 @@
 export type ThemeColorKey = "blue" | "green" | "purple" | "pink" | "orange" | "red" | "cyan" | "amber"
 
 export const THEME_COLOR_KEYS: ThemeColorKey[] = ["blue", "green", "purple", "pink", "orange", "red", "cyan", "amber"]
+
+const GLASS_CARD_COLORS: Record<string, string> = {
+  slate: "15 23 42",
+  neutral: "23 23 23",
+  zinc: "24 24 27",
+  gray: "31 41 55",
+  black: "0 0 0",
+  blue: "30 58 138",
+  indigo: "55 48 163",
+  purple: "88 28 135",
+  emerald: "6 78 59",
+}
+
+type GlassCardStyle = CSSProperties & {
+  "--glass-card-rgb": string
+  "--glass-card-opacity": string
+  "--glass-card-hover-opacity": string
+}
+
+export function resolveGlassCardStyle(settings: Record<string, unknown>): GlassCardStyle {
+  const colorKey = typeof settings.CardGlassColor === "string" ? settings.CardGlassColor.trim().toLowerCase() : "slate"
+  const opacitySetting = Number(settings.CardGlassOpacity)
+  const opacityPercent = Number.isFinite(opacitySetting) ? Math.min(80, Math.max(15, opacitySetting)) : 35
+  const opacity = opacityPercent / 100
+
+  return {
+    "--glass-card-rgb": GLASS_CARD_COLORS[colorKey] || GLASS_CARD_COLORS.slate,
+    "--glass-card-opacity": String(opacity),
+    "--glass-card-hover-opacity": String(Math.min(0.9, opacity + 0.1)),
+  }
+}
 
 export function resolveThemeColor(value: unknown, fallback: ThemeColorKey = "blue"): ThemeColorKey {
   const normalized = typeof value === "string" ? value.trim().toLowerCase() : ""

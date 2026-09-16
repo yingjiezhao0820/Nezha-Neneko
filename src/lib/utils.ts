@@ -36,7 +36,7 @@ export function formatNezhaInfo(now: number, serverInfo: NezhaServer) {
     swap: (serverInfo.state.swap_used / serverInfo.host.swap_total) * 100 || 0,
     disk: (serverInfo.state.disk_used / serverInfo.host.disk_total) * 100 || 0,
     stg: (serverInfo.state.disk_used / serverInfo.host.disk_total) * 100 || 0,
-    country_code: serverInfo.country_code,
+    country_code: resolveServerCountryCode(serverInfo),
     platform: serverInfo.host.platform || "",
     net_out_transfer: serverInfo.state.net_out_transfer || 0,
     net_in_transfer: serverInfo.state.net_in_transfer || 0,
@@ -564,12 +564,15 @@ const TAG_CURRENCY_EXTRACT = new RegExp(`<\\s*(${TAG_CURRENCIES.join("|")})\\s*>
 const TAG_CURRENCY_REMOVE = new RegExp(`<\\s*(?:${TAG_CURRENCIES.join("|")})\\s*>`, "ig")
 const TAG_TRAFFIC_RESET_EXTRACT = /<\s*TRD\s*:\s*(\d{1,2})\s*>/i
 const TAG_TRAFFIC_RESET_REMOVE = /<\s*TRD\s*:\s*\d{1,2}\s*>/ig
+const TAG_COUNTRY_EXTRACT = /<\s*TAG\s*:\s*([A-Z]{2})\s*>/i
+const TAG_COUNTRY_REMOVE = /<\s*TAG\s*:\s*[A-Z]{2}\s*>/ig
 
-// 解析 tags 字段:抽出货币/流量重置日元数据(如 <JPY>、<TRD:1>),同时返回清洗后的人类可读文本。
-export function parseTagMetadata(tags: string): { text: string; currency: string; trafficResetDay?: number } {
+// 解析 tags 字段:抽出货币、流量重置日和国旗国家码元数据(如 <JPY>、<TRD:1>、<TAG:TW>),同时返回清洗后的人类可读文本。
+export function parseTagMetadata(tags: string): { text: string; currency: string; trafficResetDay?: number; countryCode?: string } {
   if (!tags) return { text: "", currency: "" }
   let currency = ""
   let trafficResetDay: number | undefined
+  let countryCode: string | undefined
   const cleanedParts: string[] = []
   for (const rawPart of tags.split(";")) {
     const part = rawPart.trim()
@@ -587,13 +590,28 @@ export function parseTagMetadata(tags: string): { text: string; currency: string
       if (day) trafficResetDay = day
     }
 
+    if (!countryCode) {
+      const m = part.match(TAG_COUNTRY_EXTRACT)
+      if (m) countryCode = m[1].toUpperCase()
+    }
+
     const colorMatch = part.match(TAG_COLOR_EXTRACT)
     const color = colorMatch ? colorMatch[1] : ""
-    const text = part.replace(TAG_COLOR_REMOVE, "").replace(TAG_CURRENCY_REMOVE, "").replace(TAG_TRAFFIC_RESET_REMOVE, "").trim()
+    const text = part
+      .replace(TAG_COLOR_REMOVE, "")
+      .replace(TAG_CURRENCY_REMOVE, "")
+      .replace(TAG_TRAFFIC_RESET_REMOVE, "")
+      .replace(TAG_COUNTRY_REMOVE, "")
+      .trim()
     if (!text) continue
     cleanedParts.push(color ? `${color}:${text}` : text)
   }
-  return { text: cleanedParts.join(","), currency, trafficResetDay }
+  return { text: cleanedParts.join(","), currency, trafficResetDay, countryCode }
+}
+
+export function resolveServerCountryCode(server: { country_code?: string; tags?: string }): string {
+  const metadata = parseTagMetadata(typeof server.tags === "string" ? server.tags : "")
+  return metadata.countryCode || String(server.country_code || "").trim().toUpperCase()
 }
 
 // 清洗 tags 用于显示;元标签在此被静默剥离。

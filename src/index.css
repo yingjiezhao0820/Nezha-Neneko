@@ -99,6 +99,60 @@
   }
 }
 
+@layer components {
+  .glass-card {
+    background-color: rgb(var(--glass-card-rgb, 15 23 42) / var(--glass-card-opacity, 0.35));
+  }
+
+  .glass-card-interactive:hover {
+    background-color: rgb(var(--glass-card-rgb, 15 23 42) / var(--glass-card-hover-opacity, 0.45));
+  }
+
+  .asset-glass {
+    color: rgb(255 255 255);
+  }
+
+  .asset-glass .text-card-foreground {
+    color: rgb(255 255 255);
+  }
+
+  .asset-glass .text-muted-foreground {
+    color: rgb(255 255 255 / 0.58);
+  }
+
+  .asset-glass .border-border {
+    border-color: rgb(255 255 255 / 0.12);
+  }
+
+  .asset-glass .bg-border {
+    background-color: rgb(255 255 255 / 0.12);
+  }
+
+  .asset-glass .bg-card,
+  .asset-glass .bg-background {
+    background-color: rgb(0 0 0 / 0.18);
+    color: rgb(255 255 255);
+  }
+
+  .asset-glass .bg-muted\/30,
+  .asset-glass .bg-muted\/40 {
+    background-color: rgb(255 255 255 / 0.06);
+  }
+
+  .asset-glass .hover\:bg-accent:hover {
+    background-color: rgb(255 255 255 / 0.08);
+  }
+
+  .asset-glass input::placeholder {
+    color: rgb(255 255 255 / 0.4);
+  }
+
+  .asset-glass option {
+    background-color: rgb(var(--glass-card-rgb, 15 23 42));
+    color: rgb(255 255 255);
+  }
+}
+
 @layer utilities {
   .step {
     counter-increment: step;

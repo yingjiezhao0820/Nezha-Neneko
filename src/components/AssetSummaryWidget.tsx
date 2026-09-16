@@ -518,7 +518,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
     <>
       <section
         className={cn(
-          "fixed right-5 top-[70px] z-[1040] flex w-[280px] max-w-[calc(100vw-40px)] flex-col rounded-2xl border border-border bg-card/90 text-card-foreground shadow-2xl backdrop-blur-xl transition max-[576px]:right-5 max-[576px]:w-[calc(100vw-40px)]",
+          "glass-card asset-glass fixed right-5 top-[70px] z-[1040] flex w-[280px] max-w-[calc(100vw-40px)] flex-col rounded-2xl border border-white/15 text-white shadow-none backdrop-blur-xl transition max-[576px]:right-5 max-[576px]:w-[calc(100vw-40px)]",
           open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-4 opacity-0",
         )}
       >
@@ -646,9 +646,9 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
       </section>
 
       {tradeItem && (
-        <div className="fixed inset-0 z-[1999] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm" onClick={() => setTradeItem(null)}>
+        <div className="fixed inset-0 z-[1999] flex items-center justify-center bg-black/20 px-4 backdrop-blur-sm" onClick={() => setTradeItem(null)}>
           <section
-            className="max-h-[90vh] w-full max-w-[550px] overflow-hidden rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur-xl"
+            className="glass-card asset-glass max-h-[90vh] w-full max-w-[550px] overflow-hidden rounded-2xl border border-white/15 text-white shadow-none backdrop-blur-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
@@ -750,7 +750,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                 </div>
                 <button
                   type="button"
-                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-white/15 bg-white/15 px-3 text-sm font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-45"
                   disabled={!canCopyTrade}
                   onClick={handleCopyTrade}
                   title={canCopyTrade ? "复制交易信息 Markdown 表格" : "请先填写交易金额并确保剩余价值可计算"}

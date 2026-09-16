@@ -1,7 +1,7 @@
 import useTooltip from "@/hooks/use-tooltip"
 import { geoJsonString } from "@/lib/geo-json-string"
 import { countryCoordinates } from "@/lib/geo-limit"
-import { cn, formatNezhaInfo } from "@/lib/utils"
+import { cn, formatNezhaInfo, resolveServerCountryCode } from "@/lib/utils"
 import { NezhaServer } from "@/types/nezha-api"
 import { geoEquirectangular, geoPath } from "d3-geo"
 import { useTranslation } from "react-i18next"
@@ -16,8 +16,8 @@ export default function GlobalMap({ serverList, now }: { serverList: NezhaServer
   const customBackgroundImage = (window.CustomBackgroundImage as string) !== "" ? window.CustomBackgroundImage : undefined
 
   serverList.forEach((server) => {
-    if (server.country_code) {
-      const countryCode = server.country_code.toUpperCase()
+    const countryCode = resolveServerCountryCode(server)
+    if (countryCode) {
       if (!countryList.includes(countryCode)) {
         countryList.push(countryCode)
       }
@@ -115,7 +115,7 @@ export function InteractiveMap({ countries, serverCounts, width, height, filtere
                   if (path.centroid(feature)) {
                     const countryCode = feature.properties.iso_a2_eh
                     const countryServers = nezhaServerList
-                      .filter((server: NezhaServer) => server.country_code?.toUpperCase() === countryCode)
+                      .filter((server: NezhaServer) => resolveServerCountryCode(server) === countryCode)
                       .map((server: NezhaServer) => ({
                         name: server.name,
                         status: formatNezhaInfo(now, server).online,
@@ -153,7 +153,7 @@ export function InteractiveMap({ countries, serverCounts, width, height, filtere
                 key={countryCode}
                 onMouseEnter={() => {
                   const countryServers = nezhaServerList
-                    .filter((server: NezhaServer) => server.country_code?.toUpperCase() === countryCode.toUpperCase())
+                    .filter((server: NezhaServer) => resolveServerCountryCode(server) === countryCode.toUpperCase())
                     .map((server: NezhaServer) => ({
                       name: server.name,
                       status: formatNezhaInfo(now, server).online,

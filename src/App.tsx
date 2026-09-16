@@ -13,6 +13,7 @@ import { useTheme } from "./hooks/use-theme"
 import { useWebSocketContext } from "./hooks/use-websocket-context"
 import { InjectContext } from "./lib/inject"
 import { fetchSetting } from "./lib/nezha-api"
+import { resolveGlassCardStyle } from "./lib/theme-colors"
 import { cn } from "./lib/utils"
 import ErrorPage from "./pages/ErrorPage"
 import NotFound from "./pages/NotFound"
@@ -76,7 +77,9 @@ const MainApp: React.FC = () => {
   }
 
   const customMobileBackgroundImage = window.CustomMobileBackgroundImage !== "" ? window.CustomMobileBackgroundImage : undefined
-  const showAssetCard = (window as unknown as Record<string, unknown>).ShowAssetCard === true
+  const themeSettings = window as unknown as Record<string, unknown>
+  const showAssetCard = themeSettings.ShowAssetCard === true
+  const glassCardStyle = resolveGlassCardStyle(themeSettings)
 
   return (
     <ErrorBoundary>
@@ -99,6 +102,7 @@ const MainApp: React.FC = () => {
         className={cn("flex min-h-screen w-full flex-col", {
           "bg-background": !customBackgroundImage,
         })}
+        style={glassCardStyle}
       >
         <main className="z-20 flex min-h-screen flex-1 flex-col gap-4 p-4 md:p-10 md:pt-8">
           <RefreshToast />

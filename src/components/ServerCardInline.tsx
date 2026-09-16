@@ -33,7 +33,7 @@ export default function ServerCardInline({ now, serverInfo }: { now: number; ser
   return online ? (
     <section>
       <Card
-        className="flex w-full min-w-[900px] cursor-pointer items-center justify-start gap-3 rounded-2xl border-white/10 bg-neutral-900/45 p-3 text-white shadow-none backdrop-blur-md transition-colors hover:bg-neutral-900/55 md:px-5 lg:flex-row [&_.text-muted-foreground]:text-white/55"
+        className="glass-card glass-card-interactive flex w-full min-w-[900px] cursor-pointer items-center justify-start gap-3 rounded-2xl border-white/10 p-3 text-white shadow-none backdrop-blur-md transition-colors md:px-5 lg:flex-row [&_.text-muted-foreground]:text-white/55"
         onClick={cardClick}
       >
         <section className={cn("grid items-center gap-2 lg:w-36")} style={{ gridTemplateColumns: "auto auto 1fr" }}>
@@ -120,7 +120,7 @@ export default function ServerCardInline({ now, serverInfo }: { now: number; ser
     </section>
   ) : (
     <Card
-      className="flex min-h-[61px] min-w-[900px] cursor-pointer flex-row items-center justify-start rounded-2xl border-white/10 bg-neutral-900/45 p-3 text-white shadow-none backdrop-blur-md transition-colors hover:bg-neutral-900/55 md:px-5 [&_.text-muted-foreground]:text-white/55"
+      className="glass-card glass-card-interactive flex min-h-[61px] min-w-[900px] cursor-pointer flex-row items-center justify-start rounded-2xl border-white/10 p-3 text-white shadow-none backdrop-blur-md transition-colors md:px-5 [&_.text-muted-foreground]:text-white/55"
       onClick={cardClick}
     >
       <section className={cn("grid items-center gap-2 w-40")} style={{ gridTemplateColumns: "auto auto 1fr" }}>

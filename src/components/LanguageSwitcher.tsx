@@ -31,7 +31,7 @@ export function LanguageSwitcher() {
         <Button
           variant="outline"
           size="sm"
-          className="rounded-full border-white/10 bg-neutral-900/45 px-[9px] text-white shadow-none backdrop-blur-md hover:bg-neutral-900/55 hover:text-white"
+          className="glass-card glass-card-interactive rounded-full border-white/10 px-[9px] text-white shadow-none backdrop-blur-md hover:text-white"
         >
           <LanguageIcon className="size-4" />
           <span className="sr-only">Change language</span>

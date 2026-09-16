@@ -86,7 +86,7 @@ function Header() {
               type="button"
               variant="outline"
               size="sm"
-              className="rounded-full border-white/10 bg-neutral-900/45 px-[9px] text-white shadow-none backdrop-blur-md hover:bg-neutral-900/55 hover:text-white"
+              className="glass-card glass-card-interactive rounded-full border-white/10 px-[9px] text-white shadow-none backdrop-blur-md hover:text-white"
               aria-label="打开资产统计"
               title="资产统计"
               onClick={() => window.dispatchEvent(new Event(ASSET_SUMMARY_OPEN_EVENT))}
@@ -99,7 +99,7 @@ function Header() {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-full border-white/10 bg-neutral-900/45 px-[9px] text-white shadow-none backdrop-blur-md hover:bg-neutral-900/55 hover:text-white"
+              className="glass-card glass-card-interactive rounded-full border-white/10 px-[9px] text-white shadow-none backdrop-blur-md hover:text-white"
               title={t("login")}
             >
               <LogIn className="size-4" />
