@@ -110,10 +110,10 @@ export default function TrafficBar({ used, limit, resetDay, limitType }: Traffic
           )
         )}
       </div>
-      <div className="relative h-1.5 w-full">
-        <div className="absolute inset-0 rounded-full bg-white/10" />
+      <div className="relative h-[3px] w-full">
+        <div className="absolute inset-0 rounded-sm bg-white/10" />
         <div
-          className="absolute inset-0 rounded-full transition-all duration-300"
+          className="absolute inset-0 rounded-sm transition-all duration-300"
           style={{
             width: `${percentStr}%`,
             backgroundColor: getColor(percent),

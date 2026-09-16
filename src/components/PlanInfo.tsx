@@ -58,11 +58,11 @@ function parseExtraTag(tag: string): { text: string; colorClass: string } {
 }
 
 export default function PlanInfo({ parsedData }: { parsedData: PublicNoteData }) {
-  if (!parsedData || !parsedData.planDataMod) {
+  const win = window as unknown as Record<string, unknown>
+  if (!parsedData || !parsedData.planDataMod || win.ShowServerTags === false) {
     return null
   }
 
-  const win = window as unknown as Record<string, unknown>
   const hideIPv4IPv6 = win.HideIPv4IPv6Tag === true
   const hideTrafficVol = win.HideTrafficVolTag === true
 

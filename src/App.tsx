@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import React, { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Route, BrowserRouter as Router, Routes, useLocation } from "react-router-dom"
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom"
 
 import AssetSummaryWidget from "./components/AssetSummaryWidget"
 import { DashCommand } from "./components/DashCommand"
@@ -36,8 +36,6 @@ const MainApp: React.FC = () => {
   const [isCustomCodeInjected, setIsCustomCodeInjected] = useState(false)
   const { backgroundImage: customBackgroundImage } = useBackground()
   const { lastMessage } = useWebSocketContext()
-  const { pathname } = useLocation()
-  const isServerDetail = /^\/server\/[^/]+\/?$/.test(pathname)
 
   useEffect(() => {
     if (settingData?.data?.config?.custom_code) {
@@ -102,13 +100,9 @@ const MainApp: React.FC = () => {
           "bg-background": !customBackgroundImage,
         })}
       >
-        <main
-          className={cn("z-20 flex min-h-screen flex-1 flex-col p-4 md:p-10 md:pt-8", {
-            "gap-4": !isServerDetail,
-          })}
-        >
+        <main className="z-20 flex min-h-screen flex-1 flex-col gap-4 p-4 md:p-10 md:pt-8">
           <RefreshToast />
-          <Header showClock={!isServerDetail} />
+          <Header />
           {showAssetCard && lastMessage && <AssetSummaryWidget now={lastMessage.now} servers={lastMessage.servers} />}
           <DashCommand />
           <Routes>

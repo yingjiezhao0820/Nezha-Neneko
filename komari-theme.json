@@ -104,10 +104,10 @@
             },
             {
                 "key": "ShowTrafficBar",
-                "name": "显示流量进度条",
+                "name": "显示流量统计条",
                 "type": "switch",
                 "default": true,
-                "help": "开启后在服务器卡片上显示流量使用进度条（需后台配置流量限额）。"
+                "help": "控制首页服务器卡片是否显示流量用量、限额及进度条（需后台配置流量限额）。"
             },
             {
                 "key": "ShowVisitorCapsule",
@@ -171,6 +171,13 @@
                 "type": "switch",
                 "default": false,
                 "help": "开启后服务器名称固定在卡片顶部，资源信息显示在下方。"
+            },
+            {
+                "key": "ShowServerTags",
+                "name": "显示服务器标签",
+                "type": "switch",
+                "default": true,
+                "help": "控制首页服务器卡片是否显示带宽、流量、IP、线路和自定义标签。"
             },
             {
                 "key": "ShowNetTransfer",
