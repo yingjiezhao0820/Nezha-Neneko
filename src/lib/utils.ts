@@ -381,6 +381,41 @@ export function formatBillingAmount(amount: string, currency?: string): string {
   return value ? `${label}${value}` : rawAmount
 }
 
+export function formatBillingCycle(cycle?: string, language = "en"): string {
+  const rawCycle = String(cycle || "").trim()
+  if (!rawCycle) return ""
+
+  const normalized = rawCycle.toLowerCase().replace(/\s+/g, "")
+  const isChinese = language.toLowerCase().startsWith("zh")
+
+  if (["月", "m", "mo", "month", "monthly"].includes(normalized)) return isChinese ? "月" : "mo"
+  if (["季", "q", "qr", "quarter", "quarterly"].includes(normalized)) return isChinese ? "季" : "3mo"
+  if (["半", "半年", "h", "half", "semiannual", "semi-annually"].includes(normalized)) return isChinese ? "半年" : "6mo"
+  if (["年", "y", "yr", "year", "annual", "annually", "yearly"].includes(normalized)) return isChinese ? "年" : "yr"
+  if (["一次", "一次性", "one-time", "onetime", "once"].includes(normalized)) return isChinese ? "一次性" : "once"
+
+  const yearMatch = normalized.match(/^(\d+)(?:年|y|yr|yrs|year|years)$/)
+  if (yearMatch) return isChinese ? `${yearMatch[1]}年` : `${yearMatch[1]}yr`
+
+  const monthMatch = normalized.match(/^(\d+)(?:个月|個月|月|m|mo|mos|month|months)$/)
+  if (monthMatch) {
+    const months = Number(monthMatch[1])
+    if (isChinese) {
+      if (months === 1) return "月"
+      if (months === 3) return "季"
+      if (months === 6) return "半年"
+      if (months === 12) return "年"
+      return `${months}个月`
+    }
+    return months === 1 ? "mo" : `${months}mo`
+  }
+
+  const dayMatch = normalized.match(/^(\d+)(?:天|d|day|days)$/)
+  if (dayMatch) return isChinese ? `${dayMatch[1]}天` : `${dayMatch[1]}d`
+
+  return rawCycle
+}
+
 function isFollowBackendCurrency(value?: unknown): boolean {
   const raw = typeof value === "string" ? value.trim() : ""
   const normalized = raw.toLowerCase()
