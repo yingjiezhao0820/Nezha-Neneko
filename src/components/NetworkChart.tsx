@@ -60,6 +60,13 @@ function getLatestLoss(monitor: NezhaMonitor) {
   return 0
 }
 
+function getPacketLossColor(packetLoss: number): string {
+  if (packetLoss >= 10) return "text-red-400"
+  if (packetLoss >= 5) return "text-orange-300"
+  if (packetLoss >= 1) return "text-amber-300"
+  return "text-white/45"
+}
+
 export function NetworkChart({ server_id, show }: { server_id: number; show: boolean }) {
   const { t } = useTranslation()
   const [selectedMonitorIds, setSelectedMonitorIds] = useState<Set<number> | null>(null)
@@ -96,6 +103,14 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
       }, {} as ChartConfig),
     [monitorColors, visibleMonitors],
   )
+  const tooltipContentClass =
+    visibleMonitors.length > 60
+      ? "sm:grid-cols-4 sm:gap-x-5"
+      : visibleMonitors.length > 40
+        ? "sm:grid-cols-3 sm:gap-x-5"
+        : visibleMonitors.length > 20
+          ? "sm:grid-cols-2 sm:gap-x-5"
+          : undefined
 
   const toggleMonitor = (monitorId: number) => {
     setSelectedMonitorIds((current) => {
@@ -127,6 +142,7 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         {monitors.map((monitor) => {
           const isActive = selectedMonitorIds === null || selectedMonitorIds.has(monitor.monitor_id)
+          const latestLoss = getLatestLoss(monitor)
           return (
             <button
               type="button"
@@ -141,8 +157,8 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-xs text-white/75">{monitor.monitor_name}</span>
-                <span className="whitespace-nowrap text-[10px] text-white/45">
-                  {t("monitor.packetLoss")} {getLatestLoss(monitor).toFixed(2)}%
+                <span className={cn("whitespace-nowrap text-[10px]", getPacketLossColor(latestLoss))}>
+                  {t("monitor.packetLoss")} {latestLoss.toFixed(2)}%
                 </span>
               </div>
               <p className="mt-1 text-base font-semibold leading-none tabular-nums text-white">{getLatestDelay(monitor).toFixed(2)}ms</p>
@@ -177,8 +193,16 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
             />
             <ChartTooltip
               isAnimationActive={false}
+              wrapperStyle={{ pointerEvents: "auto" }}
               content={
                 <ChartTooltipContent
+                  className={cn(
+                    "max-h-[min(70vh,32rem)] max-w-[min(92vw,64rem)] overflow-y-auto overscroll-contain",
+                    visibleMonitors.length > 20 && "sm:min-w-[28rem]",
+                    visibleMonitors.length > 40 && "sm:min-w-[42rem]",
+                    visibleMonitors.length > 60 && "sm:min-w-[56rem]",
+                  )}
+                  contentClassName={tooltipContentClass}
                   indicator="line"
                   labelFormatter={(_, payload) => (payload[0]?.payload?.created_at ? formatTime(payload[0].payload.created_at) : "")}
                   formatter={(value, name) => (
