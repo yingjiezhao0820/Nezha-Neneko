@@ -119,7 +119,7 @@ export default function ServerCard({ now, serverInfo }: { now: number; serverInf
                 <TrafficBar compact used={trafficUsed} limit={traffic_limit} resetDay={traffic_reset_day} limitType={traffic_limit_type} />
               </div>
               <div className="flex w-14 flex-col">
-                <p className="text-xs text-muted-foreground">{t("serverCard.networkSpeed", "网速")}</p>
+                <p className="whitespace-nowrap text-[10px] text-muted-foreground">{t("serverCard.networkSpeed", "网速")}</p>
                 <div className="grid text-[9px] font-semibold leading-[11px]">
                   <span className="whitespace-nowrap">↑{formatTransferSpeed(up, 1)}</span>
                   <span className="whitespace-nowrap">↓{formatTransferSpeed(down, 1)}</span>
