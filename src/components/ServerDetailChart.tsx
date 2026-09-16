@@ -51,7 +51,7 @@ export default function ServerDetailChart({ server_id }: { server_id: string }) 
     return <ServerDetailChartLoading />
   }
 
-  const nezhaWsData = lastMessage ? (JSON.parse(lastMessage.data) as NezhaWebsocketResponse) : null
+  const nezhaWsData = lastMessage
 
   if (!nezhaWsData) {
     return <ServerDetailChartLoading />
@@ -75,7 +75,7 @@ export default function ServerDetailChart({ server_id }: { server_id: string }) 
   )
 }
 
-function CpuChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: { data: string }[] }) {
+function CpuChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: NezhaWebsocketResponse[] }) {
   const [cpuChartData, setCpuChartData] = useState<cpuChartData[]>([])
   const hasInitialized = useRef(false)
   const [historyLoaded, setHistoryLoaded] = useState(false)
@@ -89,7 +89,7 @@ function CpuChart({ now, data, messageHistory }: { now: number; data: NezhaServe
     if (!hasInitialized.current && messageHistory.length > 0) {
       const historyData = messageHistory
         .map((msg) => {
-          const wsData = JSON.parse(msg.data) as NezhaWebsocketResponse
+          const wsData = msg
           const server = wsData.servers.find((s) => s.id === data.id)
           if (!server) return null
           const { cpu } = formatNezhaInfo(wsData.now, server)
@@ -180,7 +180,7 @@ function CpuChart({ now, data, messageHistory }: { now: number; data: NezhaServe
   )
 }
 
-function ProcessChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: { data: string }[] }) {
+function ProcessChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: NezhaWebsocketResponse[] }) {
   const { t } = useTranslation()
   const [processChartData, setProcessChartData] = useState([] as processChartData[])
   const hasInitialized = useRef(false)
@@ -195,7 +195,7 @@ function ProcessChart({ now, data, messageHistory }: { now: number; data: NezhaS
     if (!hasInitialized.current && messageHistory.length > 0) {
       const historyData = messageHistory
         .map((msg) => {
-          const wsData = JSON.parse(msg.data) as NezhaWebsocketResponse
+          const wsData = msg
           const server = wsData.servers.find((s) => s.id === data.id)
           if (!server) return null
           const { process } = formatNezhaInfo(wsData.now, server)
@@ -292,7 +292,7 @@ function ProcessChart({ now, data, messageHistory }: { now: number; data: NezhaS
   )
 }
 
-function MemChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: { data: string }[] }) {
+function MemChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: NezhaWebsocketResponse[] }) {
   const { t } = useTranslation()
   const [memChartData, setMemChartData] = useState([] as memChartData[])
   const hasInitialized = useRef(false)
@@ -307,7 +307,7 @@ function MemChart({ now, data, messageHistory }: { now: number; data: NezhaServe
     if (!hasInitialized.current && messageHistory.length > 0) {
       const historyData = messageHistory
         .map((msg) => {
-          const wsData = JSON.parse(msg.data) as NezhaWebsocketResponse
+          const wsData = msg
           const server = wsData.servers.find((s) => s.id === data.id)
           if (!server) return null
           const { mem, swap } = formatNezhaInfo(wsData.now, server)
@@ -435,7 +435,7 @@ function MemChart({ now, data, messageHistory }: { now: number; data: NezhaServe
   )
 }
 
-function DiskChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: { data: string }[] }) {
+function DiskChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: NezhaWebsocketResponse[] }) {
   const { t } = useTranslation()
   const [diskChartData, setDiskChartData] = useState([] as diskChartData[])
   const hasInitialized = useRef(false)
@@ -450,7 +450,7 @@ function DiskChart({ now, data, messageHistory }: { now: number; data: NezhaServ
     if (!hasInitialized.current && messageHistory.length > 0) {
       const historyData = messageHistory
         .map((msg) => {
-          const wsData = JSON.parse(msg.data) as NezhaWebsocketResponse
+          const wsData = msg
           const server = wsData.servers.find((s) => s.id === data.id)
           if (!server) return null
           const { disk } = formatNezhaInfo(wsData.now, server)
@@ -546,7 +546,7 @@ function DiskChart({ now, data, messageHistory }: { now: number; data: NezhaServ
   )
 }
 
-function NetworkChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: { data: string }[] }) {
+function NetworkChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: NezhaWebsocketResponse[] }) {
   const { t } = useTranslation()
   const [networkChartData, setNetworkChartData] = useState([] as networkChartData[])
   const hasInitialized = useRef(false)
@@ -561,7 +561,7 @@ function NetworkChart({ now, data, messageHistory }: { now: number; data: NezhaS
     if (!hasInitialized.current && messageHistory.length > 0) {
       const historyData = messageHistory
         .map((msg) => {
-          const wsData = JSON.parse(msg.data) as NezhaWebsocketResponse
+          const wsData = msg
           const server = wsData.servers.find((s) => s.id === data.id)
           if (!server) return null
           const { up, down } = formatNezhaInfo(wsData.now, server)
@@ -688,7 +688,7 @@ function NetworkChart({ now, data, messageHistory }: { now: number; data: NezhaS
   )
 }
 
-function ConnectChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: { data: string }[] }) {
+function ConnectChart({ now, data, messageHistory }: { now: number; data: NezhaServer; messageHistory: NezhaWebsocketResponse[] }) {
   const [connectChartData, setConnectChartData] = useState([] as connectChartData[])
   const hasInitialized = useRef(false)
   const [historyLoaded, setHistoryLoaded] = useState(false)
@@ -702,7 +702,7 @@ function ConnectChart({ now, data, messageHistory }: { now: number; data: NezhaS
     if (!hasInitialized.current && messageHistory.length > 0) {
       const historyData = messageHistory
         .map((msg) => {
-          const wsData = JSON.parse(msg.data) as NezhaWebsocketResponse
+          const wsData = msg
           const server = wsData.servers.find((s) => s.id === data.id)
           if (!server) return null
           const { tcp, udp } = formatNezhaInfo(wsData.now, server)

@@ -1,5 +1,6 @@
 import { SharedClient } from "@/hooks/use-rpc2"
 import { getKomariNodes, komariToNezhaWebsocketResponse } from "@/lib/utils"
+import { NezhaWebsocketResponse } from "@/types/nezha-api"
 import React, { useEffect, useRef, useState } from "react"
 
 import { WebSocketContext, WebSocketContextType } from "./websocket-context"
@@ -9,155 +10,80 @@ interface WebSocketProviderProps {
   children: React.ReactNode
 }
 
-export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, children }) => {
-  const [lastMessage, setLastMessage] = useState<{ data: string } | null>(null)
-  const [messageHistory, setMessageHistory] = useState<{ data: string }[]>([]) // 新增历史消息状态
+const SNAPSHOT_CACHE_KEY = "komari:last-status-snapshot"
+const SNAPSHOT_MAX_AGE = 5 * 60 * 1000
+
+function readCachedSnapshot(): NezhaWebsocketResponse | null {
+  try {
+    const raw = sessionStorage.getItem(SNAPSHOT_CACHE_KEY)
+    if (!raw) return null
+
+    const snapshot = JSON.parse(raw) as NezhaWebsocketResponse
+    if (!Number.isFinite(snapshot.now) || !Array.isArray(snapshot.servers) || Date.now() - snapshot.now > SNAPSHOT_MAX_AGE) {
+      sessionStorage.removeItem(SNAPSHOT_CACHE_KEY)
+      return null
+    }
+
+    return snapshot
+  } catch {
+    sessionStorage.removeItem(SNAPSHOT_CACHE_KEY)
+    return null
+  }
+}
+
+export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
+  const cachedSnapshot = useRef<NezhaWebsocketResponse | null>(readCachedSnapshot())
+  const [lastMessage, setLastMessage] = useState<NezhaWebsocketResponse | null>(cachedSnapshot.current)
+  const [messageHistory, setMessageHistory] = useState<NezhaWebsocketResponse[]>(() =>
+    cachedSnapshot.current ? [cachedSnapshot.current] : [],
+  )
   const [connected, setConnected] = useState(false)
   const [needReconnect, setNeedReconnect] = useState(false)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  const getData = () => {
-    const rpc2 = SharedClient()
-    return rpc2
-      .call("common:getNodesLatestStatus")
-      .then((res) => {
-        const nzwsres = komariToNezhaWebsocketResponse(res)
-        setLastMessage({ data: JSON.stringify(nzwsres) })
-        setMessageHistory((prev) => {
-          const updated = [{ data: JSON.stringify(nzwsres) }, ...prev]
-          return updated.slice(0, 30)
-        })
-      })
-      .catch((err) => {
-        // 单次失败不影响后续轮询;不向上抛出避免变成未处理的 Promise rejection
-        console.warn("getNodesLatestStatus 失败,等待下一轮:", err?.message || err)
-      })
-  }
+  const requestInFlight = useRef(false)
 
   useEffect(() => {
-    getKomariNodes() // 尝试缓存
-    getData().then(() => {
-      setConnected(true)
-    })
+    let disposed = false
 
-    intervalRef.current = setInterval(() => {
-      getData()
-    }, 2000)
+    const getData = async () => {
+      if (requestInFlight.current) return
+      requestInFlight.current = true
+
+      try {
+        const rpc2 = SharedClient()
+        // 节点元数据与实时状态并行获取，但首屏必须等待两者就绪。
+        // 旧实现会在元数据尚未写入缓存时先渲染空表格，再等 2 秒轮询。
+        const [nodes, latestStatus] = await Promise.all([getKomariNodes(), rpc2.call("common:getNodesLatestStatus")])
+        const nextSnapshot = komariToNezhaWebsocketResponse(latestStatus, nodes)
+
+        if (disposed) return
+
+        setLastMessage(nextSnapshot)
+        setMessageHistory((previous) => [nextSnapshot, ...previous].slice(0, 30))
+        setConnected(true)
+        setNeedReconnect(false)
+        sessionStorage.setItem(SNAPSHOT_CACHE_KEY, JSON.stringify(nextSnapshot))
+      } catch (error) {
+        if (!disposed) {
+          setNeedReconnect(true)
+          console.warn("getNodesLatestStatus 失败，等待下一轮:", error instanceof Error ? error.message : error)
+        }
+      } finally {
+        requestInFlight.current = false
+      }
+    }
+
+    void getData()
+    const interval = window.setInterval(() => void getData(), 2000)
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
+      disposed = true
+      window.clearInterval(interval)
     }
   }, [])
 
-  const cleanup = () => {
-    return
-    // 使用RPC2自动管理
-    // if (ws.current) {
-    //   // 移除所有事件监听器
-    //   ws.current.onopen = null
-    //   ws.current.onclose = null
-    //   ws.current.onmessage = null
-    //   ws.current.onerror = null
-
-    //   if (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING) {
-    //     ws.current.close()
-    //   }
-    //   ws.current = null
-    // }
-    // if (reconnectTimeout.current) {
-    //   clearTimeout(reconnectTimeout.current)
-    //   reconnectTimeout.current = null
-    // }
-    // setConnected(false)
-  }
-
-  const connect = () => {
-    return
-    // 使用RPC2自动管理
-    // if (isConnecting.current) {
-    //   console.log("Connection already in progress")
-    //   return
-    // }
-
-    // cleanup()
-    // isConnecting.current = true
-
-    // try {
-    //   const wsUrl = new URL(url, window.location.origin)
-    //   wsUrl.protocol = wsUrl.protocol.replace("http", "ws")
-
-    //   ws.current = new WebSocket(wsUrl.toString())
-
-    //   ws.current.onopen = () => {
-    //     console.log("WebSocket connected")
-    //     setConnected(true)
-    //     reconnectAttempts.current = 0
-    //     isConnecting.current = false
-    //   }
-
-    //   ws.current.onclose = () => {
-    //     console.log("WebSocket disconnected")
-    //     setConnected(false)
-    //     ws.current = null
-    //     isConnecting.current = false
-
-    //     if (reconnectAttempts.current < maxReconnectAttempts) {
-    //       reconnectTimeout.current = setTimeout(() => {
-    //         reconnectAttempts.current++
-    //         connect()
-    //       }, 3000)
-    //     }
-    //   }
-
-    //   ws.current.onmessage = (event) => {
-    //     const newMessage = { data: event.data }
-    //     setLastMessage(newMessage)
-    //     // 更新历史消息，保持最新的30条记录
-    //     setMessageHistory((prev) => {
-    //       const updated = [newMessage, ...prev]
-    //       return updated.slice(0, 30)
-    //     })
-    //   }
-
-    //   ws.current.onerror = (error) => {
-    //     console.error("WebSocket error:", error)
-    //     isConnecting.current = false
-    //   }
-    // } catch (error) {
-    //   console.error("WebSocket connection error:", error)
-    //   isConnecting.current = false
-    // }
-  }
-
   const reconnect = () => {
-    return
-    // 使用RPC2自动管理
-    // reconnectAttempts.current = 0
-    // // 等待一个小延时确保清理完成
-    // cleanup()
-    // setTimeout(() => {
-    //   connect()
-    // }, 1000)
+    setNeedReconnect(true)
   }
-
-  useEffect(() => {
-    connect()
-
-    // 添加页面卸载事件监听
-    const handleBeforeUnload = () => {
-      cleanup()
-    }
-
-    window.addEventListener("beforeunload", handleBeforeUnload)
-
-    return () => {
-      cleanup()
-      window.removeEventListener("beforeunload", handleBeforeUnload)
-    }
-  }, [url])
 
   const contextValue: WebSocketContextType = {
     lastMessage,

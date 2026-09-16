@@ -16,11 +16,10 @@ import { useStatus } from "@/hooks/use-status"
 import { useWebSocketContext } from "@/hooks/use-websocket-context"
 import { fetchServerGroup } from "@/lib/nezha-api"
 import { cn, formatNezhaInfo } from "@/lib/utils"
-import { NezhaWebsocketResponse } from "@/types/nezha-api"
 import { ServerGroup } from "@/types/nezha-api"
 import { ArrowDownIcon, ArrowUpIcon, ArrowsUpDownIcon, ChartBarSquareIcon, MapIcon, ViewColumnsIcon } from "@heroicons/react/20/solid"
 import { useQuery } from "@tanstack/react-query"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 export default function Servers() {
@@ -105,7 +104,7 @@ export default function Servers() {
     restoreScrollPosition()
   }, [])
 
-  const nezhaWsData = lastMessage ? (JSON.parse(lastMessage.data) as NezhaWebsocketResponse) : null
+  const nezhaWsData = lastMessage
 
   const groupTabs = [
     "All",
@@ -116,12 +115,112 @@ export default function Servers() {
       ?.map((item: ServerGroup) => item.group.name) || []),
   ]
 
+  const {
+    groupFilteredServers,
+    filteredServers,
+    totalServers,
+    onlineServers,
+    offlineServers,
+    up,
+    down,
+    upSpeed,
+    downSpeed,
+  } = useMemo(() => {
+    if (!nezhaWsData) {
+      return {
+        groupFilteredServers: [],
+        filteredServers: [],
+        totalServers: 0,
+        onlineServers: 0,
+        offlineServers: 0,
+        up: 0,
+        down: 0,
+        upSpeed: 0,
+        downSpeed: 0,
+      }
+    }
+
+    const selectedGroup = groupData?.data?.find((group: ServerGroup) => group.group.name === currentGroup)
+    const rows = nezhaWsData.servers
+      .filter((server) => currentGroup === "All" || selectedGroup?.servers?.includes(server.id))
+      .map((server) => ({ server, info: formatNezhaInfo(nezhaWsData.now, server) }))
+
+    const summary = rows.reduce(
+      (result, { server, info }) => {
+        if (info.online) {
+          result.onlineServers += 1
+          result.up += server.state?.net_out_transfer ?? 0
+          result.down += server.state?.net_in_transfer ?? 0
+          result.upSpeed += server.state?.net_out_speed ?? 0
+          result.downSpeed += server.state?.net_in_speed ?? 0
+        } else {
+          result.offlineServers += 1
+        }
+        return result
+      },
+      { onlineServers: 0, offlineServers: 0, up: 0, down: 0, upSpeed: 0, downSpeed: 0 },
+    )
+
+    const visibleRows = rows.filter(({ info }) => status === "all" || status === (info.online ? "online" : "offline"))
+    visibleRows.sort((a, b) => {
+      if (sortType !== "name") {
+        if (!a.info.online && b.info.online) return 1
+        if (a.info.online && !b.info.online) return -1
+        if (!a.info.online && !b.info.online) return 0
+      }
+
+      let comparison = 0
+      switch (sortType) {
+        case "name":
+          comparison = a.server.name.localeCompare(b.server.name)
+          break
+        case "uptime":
+          comparison = (a.server.state?.uptime ?? 0) - (b.server.state?.uptime ?? 0)
+          break
+        case "system":
+          comparison = a.server.host.platform.localeCompare(b.server.host.platform)
+          break
+        case "cpu":
+          comparison = (a.server.state?.cpu ?? 0) - (b.server.state?.cpu ?? 0)
+          break
+        case "mem":
+          comparison = a.info.mem - b.info.mem
+          break
+        case "disk":
+          comparison = a.info.disk - b.info.disk
+          break
+        case "up":
+          comparison = (a.server.state?.net_out_speed ?? 0) - (b.server.state?.net_out_speed ?? 0)
+          break
+        case "down":
+          comparison = (a.server.state?.net_in_speed ?? 0) - (b.server.state?.net_in_speed ?? 0)
+          break
+        case "up total":
+          comparison = (a.server.state?.net_out_transfer ?? 0) - (b.server.state?.net_out_transfer ?? 0)
+          break
+        case "down total":
+          comparison = (a.server.state?.net_in_transfer ?? 0) - (b.server.state?.net_in_transfer ?? 0)
+          break
+        default:
+          comparison = (a.server.display_index ?? 0) - (b.server.display_index ?? 0)
+      }
+
+      return sortOrder === "asc" ? comparison : -comparison
+    })
+
+    return {
+      groupFilteredServers: rows.map(({ server }) => server),
+      filteredServers: visibleRows.map(({ server }) => server),
+      totalServers: rows.length,
+      ...summary,
+    }
+  }, [currentGroup, groupData?.data, nezhaWsData, sortOrder, sortType, status])
+
   if (!connected && !lastMessage) {
     return (
-      <div className="flex flex-col items-center min-h-96 justify-center ">
-        <div className="font-semibold flex items-center gap-2 text-sm">
+      <div className="flex min-h-96 flex-col items-center justify-center">
+        <div className="flex items-center gap-2 text-sm font-semibold">
           <Loader visible={true} />
-          {/* {t("info.websocketConnecting")} */}
         </div>
       </div>
     )
@@ -129,106 +228,11 @@ export default function Servers() {
 
   if (!nezhaWsData) {
     return (
-      <div className="flex flex-col items-center justify-center ">
-        <p className="font-semibold text-sm">{t("info.processing")}</p>
+      <div className="flex flex-col items-center justify-center">
+        <p className="text-sm font-semibold">{t("info.processing")}</p>
       </div>
     )
   }
-
-  const groupFilteredServers =
-    nezhaWsData?.servers?.filter((server) => {
-      if (currentGroup === "All") return true
-      const group = groupData?.data?.find(
-        (g: ServerGroup) => g.group.name === currentGroup && Array.isArray(g.servers) && g.servers.includes(server.id),
-      )
-      return !!group
-    }) || []
-  let filteredServers = groupFilteredServers
-
-  const totalServers = filteredServers.length || 0
-  const onlineServers = filteredServers.filter((server) => formatNezhaInfo(nezhaWsData.now, server).online)?.length || 0
-  const offlineServers = filteredServers.filter((server) => !formatNezhaInfo(nezhaWsData.now, server).online)?.length || 0
-  const up =
-    filteredServers.reduce(
-      (total, server) => (formatNezhaInfo(nezhaWsData.now, server).online ? total + (server.state?.net_out_transfer ?? 0) : total),
-      0,
-    ) || 0
-  const down =
-    filteredServers.reduce(
-      (total, server) => (formatNezhaInfo(nezhaWsData.now, server).online ? total + (server.state?.net_in_transfer ?? 0) : total),
-      0,
-    ) || 0
-
-  const upSpeed =
-    filteredServers.reduce(
-      (total, server) => (formatNezhaInfo(nezhaWsData.now, server).online ? total + (server.state?.net_out_speed ?? 0) : total),
-      0,
-    ) || 0
-  const downSpeed =
-    filteredServers.reduce(
-      (total, server) => (formatNezhaInfo(nezhaWsData.now, server).online ? total + (server.state?.net_in_speed ?? 0) : total),
-      0,
-    ) || 0
-
-  filteredServers =
-    status === "all"
-      ? filteredServers
-      : filteredServers.filter((server) => [status].includes(formatNezhaInfo(nezhaWsData.now, server).online ? "online" : "offline"))
-
-  filteredServers = filteredServers.sort((a, b) => {
-    const serverAInfo = formatNezhaInfo(nezhaWsData.now, a)
-    const serverBInfo = formatNezhaInfo(nezhaWsData.now, b)
-
-    if (sortType !== "name") {
-      // 仅在非 "name" 排序时，先按在线状态排序
-      if (!serverAInfo.online && serverBInfo.online) return 1
-      if (serverAInfo.online && !serverBInfo.online) return -1
-      if (!serverAInfo.online && !serverBInfo.online) {
-        // 如果两者都离线，可以继续按照其他条件排序，或者保持原序
-        // 这里选择保持原序
-        return 0
-      }
-    }
-
-    let comparison = 0
-
-    switch (sortType) {
-      case "name":
-        comparison = a.name.localeCompare(b.name)
-        break
-      case "uptime":
-        comparison = (a.state?.uptime ?? 0) - (b.state?.uptime ?? 0)
-        break
-      case "system":
-        comparison = a.host.platform.localeCompare(b.host.platform)
-        break
-      case "cpu":
-        comparison = (a.state?.cpu ?? 0) - (b.state?.cpu ?? 0)
-        break
-      case "mem":
-        comparison = (formatNezhaInfo(nezhaWsData.now, a).mem ?? 0) - (formatNezhaInfo(nezhaWsData.now, b).mem ?? 0)
-        break
-      case "disk":
-        comparison = (formatNezhaInfo(nezhaWsData.now, a).disk ?? 0) - (formatNezhaInfo(nezhaWsData.now, b).disk ?? 0)
-        break
-      case "up":
-        comparison = (a.state?.net_out_speed ?? 0) - (b.state?.net_out_speed ?? 0)
-        break
-      case "down":
-        comparison = (a.state?.net_in_speed ?? 0) - (b.state?.net_in_speed ?? 0)
-        break
-      case "up total":
-        comparison = (a.state?.net_out_transfer ?? 0) - (b.state?.net_out_transfer ?? 0)
-        break
-      case "down total":
-        comparison = (a.state?.net_in_transfer ?? 0) - (b.state?.net_in_transfer ?? 0)
-        break
-      default:
-        comparison = (a.display_index ?? 0) - (b.display_index ?? 0)
-    }
-
-    return sortOrder === "asc" ? comparison : -comparison
-  })
 
   return (
     <div className="mx-auto w-full max-w-5xl px-0">
