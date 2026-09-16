@@ -67,6 +67,7 @@
     "disk": "Disk",
     "region": "Region",
     "system": "System",
+    "cores": "Cores",
     "upload": "Upload",
     "download": "Download",
     "lastActive": "Last active time",

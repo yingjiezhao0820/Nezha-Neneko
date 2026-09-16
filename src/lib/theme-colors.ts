@@ -20,6 +20,7 @@ const GLASS_CARD_COLORS: Record<string, string> = {
   zinc: "24 24 27",
   gray: "31 41 55",
   black: "0 0 0",
+  white: "255 255 255",
   blue: "30 58 138",
   indigo: "55 48 163",
   purple: "88 28 135",
@@ -74,8 +75,7 @@ export const CAPSULE_COLORS: Record<ThemeColorKey, CapsuleColorClasses> = {
       "border-blue-300/70 bg-blue-50/85 text-blue-950 shadow-[0_10px_30px_rgba(37,99,235,0.22)] dark:border-blue-400/30 dark:bg-blue-950/80 dark:text-blue-50",
     ipLabel: "text-blue-700 dark:text-blue-200",
     divider: "bg-blue-200 dark:bg-blue-500/40",
-    iconWrap:
-      "border-blue-200/70 bg-white/80 text-blue-600 dark:border-blue-300/25 dark:bg-blue-900/70 dark:text-blue-200",
+    iconWrap: "border-blue-200/70 bg-white/80 text-blue-600 dark:border-blue-300/25 dark:bg-blue-900/70 dark:text-blue-200",
     errorAccent: "text-blue-700 dark:text-blue-200",
   },
   green: {
@@ -83,8 +83,7 @@ export const CAPSULE_COLORS: Record<ThemeColorKey, CapsuleColorClasses> = {
       "border-green-300/70 bg-green-50/85 text-green-950 shadow-[0_10px_30px_rgba(22,163,74,0.22)] dark:border-green-400/30 dark:bg-green-950/80 dark:text-green-50",
     ipLabel: "text-green-700 dark:text-green-200",
     divider: "bg-green-200 dark:bg-green-500/40",
-    iconWrap:
-      "border-green-200/70 bg-white/80 text-green-600 dark:border-green-300/25 dark:bg-green-900/70 dark:text-green-200",
+    iconWrap: "border-green-200/70 bg-white/80 text-green-600 dark:border-green-300/25 dark:bg-green-900/70 dark:text-green-200",
     errorAccent: "text-green-700 dark:text-green-200",
   },
   purple: {
@@ -92,8 +91,7 @@ export const CAPSULE_COLORS: Record<ThemeColorKey, CapsuleColorClasses> = {
       "border-purple-300/70 bg-purple-50/85 text-purple-950 shadow-[0_10px_30px_rgba(147,51,234,0.22)] dark:border-purple-400/30 dark:bg-purple-950/80 dark:text-purple-50",
     ipLabel: "text-purple-700 dark:text-purple-200",
     divider: "bg-purple-200 dark:bg-purple-500/40",
-    iconWrap:
-      "border-purple-200/70 bg-white/80 text-purple-600 dark:border-purple-300/25 dark:bg-purple-900/70 dark:text-purple-200",
+    iconWrap: "border-purple-200/70 bg-white/80 text-purple-600 dark:border-purple-300/25 dark:bg-purple-900/70 dark:text-purple-200",
     errorAccent: "text-purple-700 dark:text-purple-200",
   },
   pink: {
@@ -101,8 +99,7 @@ export const CAPSULE_COLORS: Record<ThemeColorKey, CapsuleColorClasses> = {
       "border-pink-300/70 bg-pink-50/85 text-pink-950 shadow-[0_10px_30px_rgba(219,39,119,0.22)] dark:border-pink-400/30 dark:bg-pink-950/80 dark:text-pink-50",
     ipLabel: "text-pink-700 dark:text-pink-200",
     divider: "bg-pink-200 dark:bg-pink-500/40",
-    iconWrap:
-      "border-pink-200/70 bg-white/80 text-pink-600 dark:border-pink-300/25 dark:bg-pink-900/70 dark:text-pink-200",
+    iconWrap: "border-pink-200/70 bg-white/80 text-pink-600 dark:border-pink-300/25 dark:bg-pink-900/70 dark:text-pink-200",
     errorAccent: "text-pink-700 dark:text-pink-200",
   },
   orange: {
@@ -110,8 +107,7 @@ export const CAPSULE_COLORS: Record<ThemeColorKey, CapsuleColorClasses> = {
       "border-orange-300/70 bg-orange-50/85 text-orange-950 shadow-[0_10px_30px_rgba(234,88,12,0.22)] dark:border-orange-400/30 dark:bg-orange-950/80 dark:text-orange-50",
     ipLabel: "text-orange-700 dark:text-orange-200",
     divider: "bg-orange-200 dark:bg-orange-500/40",
-    iconWrap:
-      "border-orange-200/70 bg-white/80 text-orange-600 dark:border-orange-300/25 dark:bg-orange-900/70 dark:text-orange-200",
+    iconWrap: "border-orange-200/70 bg-white/80 text-orange-600 dark:border-orange-300/25 dark:bg-orange-900/70 dark:text-orange-200",
     errorAccent: "text-orange-700 dark:text-orange-200",
   },
   red: {
@@ -119,8 +115,7 @@ export const CAPSULE_COLORS: Record<ThemeColorKey, CapsuleColorClasses> = {
       "border-red-300/70 bg-red-50/85 text-red-950 shadow-[0_10px_30px_rgba(220,38,38,0.22)] dark:border-red-400/30 dark:bg-red-950/80 dark:text-red-50",
     ipLabel: "text-red-700 dark:text-red-200",
     divider: "bg-red-200 dark:bg-red-500/40",
-    iconWrap:
-      "border-red-200/70 bg-white/80 text-red-600 dark:border-red-300/25 dark:bg-red-900/70 dark:text-red-200",
+    iconWrap: "border-red-200/70 bg-white/80 text-red-600 dark:border-red-300/25 dark:bg-red-900/70 dark:text-red-200",
     errorAccent: "text-red-700 dark:text-red-200",
   },
   cyan: {
@@ -128,8 +123,7 @@ export const CAPSULE_COLORS: Record<ThemeColorKey, CapsuleColorClasses> = {
       "border-cyan-300/70 bg-cyan-50/85 text-cyan-950 shadow-[0_10px_30px_rgba(8,145,178,0.22)] dark:border-cyan-400/30 dark:bg-cyan-950/80 dark:text-cyan-50",
     ipLabel: "text-cyan-700 dark:text-cyan-200",
     divider: "bg-cyan-200 dark:bg-cyan-500/40",
-    iconWrap:
-      "border-cyan-200/70 bg-white/80 text-cyan-600 dark:border-cyan-300/25 dark:bg-cyan-900/70 dark:text-cyan-200",
+    iconWrap: "border-cyan-200/70 bg-white/80 text-cyan-600 dark:border-cyan-300/25 dark:bg-cyan-900/70 dark:text-cyan-200",
     errorAccent: "text-cyan-700 dark:text-cyan-200",
   },
   amber: {
@@ -137,8 +131,7 @@ export const CAPSULE_COLORS: Record<ThemeColorKey, CapsuleColorClasses> = {
       "border-amber-300/70 bg-amber-50/85 text-amber-950 shadow-[0_10px_30px_rgba(217,119,6,0.22)] dark:border-amber-400/30 dark:bg-amber-950/80 dark:text-amber-50",
     ipLabel: "text-amber-700 dark:text-amber-200",
     divider: "bg-amber-200 dark:bg-amber-500/40",
-    iconWrap:
-      "border-amber-200/70 bg-white/80 text-amber-600 dark:border-amber-300/25 dark:bg-amber-900/70 dark:text-amber-200",
+    iconWrap: "border-amber-200/70 bg-white/80 text-amber-600 dark:border-amber-300/25 dark:bg-amber-900/70 dark:text-amber-200",
     errorAccent: "text-amber-700 dark:text-amber-200",
   },
 }

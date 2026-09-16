@@ -86,7 +86,7 @@ npm run build
 | `CustomMobileBackgroundImage`    | 设置移动端独立背景图片                                       |
 | `CustomLogo`                     | 设置站点 Logo 和浏览器图标                                   |
 | `ForceTheme`                     | 强制亮色、暗色或跟随系统                                     |
-| `CardGlassColor`                 | 设置通用毛玻璃卡片颜色                                       |
+| `CardGlassColor`                 | 设置通用毛玻璃卡片颜色，支持白色                             |
 | `CardGlassOpacity`               | 设置首页和详情卡片背景透明度                                 |
 | `EnableServerCardHoverAnimation` | 开启首页服务器卡片浮起、缩放和阴影动画，默认关闭             |
 | `ShowGroupBar`                   | 控制首页地图、服务、布局、分组和排序整栏                     |

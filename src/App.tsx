@@ -38,6 +38,8 @@ const MainApp: React.FC = () => {
   const [isCustomCodeInjected, setIsCustomCodeInjected] = useState(false)
   const { backgroundImage: customBackgroundImage } = useBackground()
   const { lastMessage } = useWebSocketContext()
+  const themeSettings = window as unknown as Record<string, unknown>
+  const glassCardStyle = resolveGlassCardStyle(themeSettings)
 
   useEffect(() => {
     if (settingData?.data?.config?.custom_code) {
@@ -56,6 +58,32 @@ const MainApp: React.FC = () => {
       setTheme(forceTheme)
     }
   }, [forceTheme])
+
+  useEffect(() => {
+    const rootStyle = document.documentElement.style
+    const variables = [
+      ["--glass-card-rgb", glassCardStyle["--glass-card-rgb"]],
+      ["--glass-card-opacity", glassCardStyle["--glass-card-opacity"]],
+      ["--glass-card-hover-opacity", glassCardStyle["--glass-card-hover-opacity"]],
+      ["--asset-card-opacity", glassCardStyle["--asset-card-opacity"]],
+    ] as const
+    const previousValues = variables.map(([name]) => rootStyle.getPropertyValue(name))
+
+    variables.forEach(([name, value]) => rootStyle.setProperty(name, value))
+
+    return () => {
+      variables.forEach(([name], index) => {
+        const previousValue = previousValues[index]
+        if (previousValue) rootStyle.setProperty(name, previousValue)
+        else rootStyle.removeProperty(name)
+      })
+    }
+  }, [
+    glassCardStyle["--asset-card-opacity"],
+    glassCardStyle["--glass-card-hover-opacity"],
+    glassCardStyle["--glass-card-opacity"],
+    glassCardStyle["--glass-card-rgb"],
+  ])
 
   if (error) {
     return <ErrorPage code={500} message={error.message} />
@@ -78,11 +106,9 @@ const MainApp: React.FC = () => {
   }
 
   const customMobileBackgroundImage = window.CustomMobileBackgroundImage !== "" ? window.CustomMobileBackgroundImage : undefined
-  const themeSettings = window as unknown as Record<string, unknown>
   const showAssetCard = themeSettings.ShowAssetCard === true
   const showServerDetailAssets = themeSettings.ShowServerDetailAssets === true
   const mountAssetWidget = showAssetCard || showServerDetailAssets
-  const glassCardStyle = resolveGlassCardStyle(themeSettings)
 
   return (
     <ErrorBoundary>

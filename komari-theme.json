@@ -199,9 +199,9 @@
                 "key": "CardGlassColor",
                 "name": "卡片毛玻璃颜色",
                 "type": "select",
-                "options": "slate,neutral,zinc,gray,black,blue,indigo,purple,emerald",
+                "options": "slate,neutral,zinc,gray,black,white,blue,indigo,purple,emerald",
                 "default": "slate",
-                "help": "设置首页、详情页及资产卡片的毛玻璃背景色。"
+                "help": "设置首页、详情页及资产卡片的毛玻璃背景色，支持白色毛玻璃。"
             },
             {
                 "key": "CardGlassOpacity",

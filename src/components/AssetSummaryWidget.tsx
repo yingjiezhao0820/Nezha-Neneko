@@ -1,6 +1,3 @@
-import { Check, CircleDollarSign, Copy, Heart, HelpCircle, RefreshCw, X } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
-
 import { buildMarkdownTable, copyTextToClipboard } from "@/lib/clipboard"
 import { formatBytes } from "@/lib/format"
 import { ASSET_COLORS, resolveAssetColor } from "@/lib/theme-colors"
@@ -17,6 +14,8 @@ import {
   resolveThemeBillingCurrency,
 } from "@/lib/utils"
 import { NezhaServer } from "@/types/nezha-api"
+import { Check, CircleDollarSign, Copy, Heart, HelpCircle, RefreshCw, X } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 
 type AssetSummaryWidgetProps = {
   now: number
@@ -417,7 +416,12 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
             <CircleDollarSign className="size-4" />
             资产统计
           </h3>
-          <button type="button" aria-label="关闭资产统计" className={cn("rounded-full p-1 text-muted-foreground transition", palette.hoverPrimary)} onClick={() => setOpen(false)}>
+          <button
+            type="button"
+            aria-label="关闭资产统计"
+            className={cn("rounded-full p-1 text-muted-foreground transition", palette.hoverPrimary)}
+            onClick={() => setOpen(false)}
+          >
             <X className="size-4" />
           </button>
         </div>
@@ -464,9 +468,14 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                     <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" title={item.name}>
                       {item.name}
                     </span>
-                    <span className={cn("flex shrink-0 items-center gap-1 font-semibold", palette.primaryText)} title={`${item.sourcePriceText} · ${title}`}>
+                    <span
+                      className={cn("flex shrink-0 items-center gap-1 font-semibold", palette.primaryText)}
+                      title={`${item.sourcePriceText} · ${title}`}
+                    >
                       {formatMoney(convertedValue, targetCurrency)}
-                      {(item.isFree || item.isUsageBased || item.isFreeTagged || item.isLongTerm || item.isExpired) && <HelpCircle className="size-3 text-muted-foreground" />}
+                      {(item.isFree || item.isUsageBased || item.isFreeTagged || item.isLongTerm || item.isExpired) && (
+                        <HelpCircle className="size-3 text-muted-foreground" />
+                      )}
                     </span>
                   </button>
                 )
@@ -546,7 +555,12 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                 <CircleDollarSign className="size-4" />
                 服务器交易
               </h3>
-              <button type="button" aria-label="关闭交易计算" className={cn("rounded-full p-1 text-muted-foreground transition", palette.hoverPrimary)} onClick={() => setTradeItem(null)}>
+              <button
+                type="button"
+                aria-label="关闭交易计算"
+                className={cn("rounded-full p-1 text-muted-foreground transition", palette.hoverPrimary)}
+                onClick={() => setTradeItem(null)}
+              >
                 <X className="size-4" />
               </button>
             </div>
@@ -574,9 +588,13 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                   <span className="text-muted-foreground">流量</span>
                   <p className="font-medium">
                     {tradeItem.formatted.traffic_limit > 0
-                      ? `${formatBytes(tradeItem.formatted.traffic_limit)} / ${formatBytes(
-                          calcTrafficUsed(tradeItem.formatted.net_out_transfer, tradeItem.formatted.net_in_transfer, tradeItem.formatted.traffic_limit_type),
-                        )}`
+                      ? `${formatBytes(
+                          calcTrafficUsed(
+                            tradeItem.formatted.net_out_transfer,
+                            tradeItem.formatted.net_in_transfer,
+                            tradeItem.formatted.traffic_limit_type,
+                          ),
+                        )} / ${formatBytes(tradeItem.formatted.traffic_limit)}`
                       : "-"}
                   </p>
                 </div>
@@ -597,7 +615,10 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                   <label className="grid min-w-0 gap-1 text-[13px] font-semibold text-muted-foreground">
                     交易日期
                     <input
-                      className={cn("h-9 min-w-0 w-full rounded-md border border-border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-2", palette.focusInput)}
+                      className={cn(
+                        "h-9 min-w-0 w-full rounded-md border border-border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-2",
+                        palette.focusInput,
+                      )}
                       type="date"
                       value={tradeDate}
                       onChange={(event) => {
@@ -609,7 +630,11 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                   <label className="grid min-w-0 gap-1 text-[13px] font-semibold text-muted-foreground">
                     交易金额
                     <input
-                      className={cn("h-9 min-w-0 w-full rounded-md border-2 border-border bg-background px-2.5 text-sm font-bold outline-none transition focus:ring-2", palette.primaryText, palette.focusInput)}
+                      className={cn(
+                        "h-9 min-w-0 w-full rounded-md border-2 border-border bg-background px-2.5 text-sm font-bold outline-none transition focus:ring-2",
+                        palette.primaryText,
+                        palette.focusInput,
+                      )}
                       type="number"
                       min="0"
                       step="0.01"
