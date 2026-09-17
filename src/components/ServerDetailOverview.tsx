@@ -115,6 +115,8 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
   const showBillingSummary = Boolean(billing || info.expired_at)
   const showTraffic = trafficLimit > 0
   const showDetailAssets = (window as unknown as Record<string, unknown>).ShowServerDetailAssets === true
+  const showTrafficInOverview = showDetailAssets && showTraffic
+  const overviewMetricCellClass = cn("col-span-2 px-4 py-3", showTrafficInOverview ? "sm:col-span-3 lg:col-span-3" : "sm:col-span-2 lg:col-span-4")
   const goBack = () => {
     if (hasHistory) navigate(-1)
     else navigate("/")
@@ -131,8 +133,8 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
           <h1 className="max-w-[70vw] truncate text-xl font-semibold tracking-tight text-white">{info.name}</h1>
         </button>
 
-        <div className="grid grid-cols-2 border-t border-white/10 sm:grid-cols-6 [&>*]:border-b [&>*]:border-r [&>*]:border-white/10">
-          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.status")}>
+        <div className="grid grid-cols-2 border-t border-white/10 sm:grid-cols-6 lg:grid-cols-12 [&>*]:border-b [&>*]:border-r [&>*]:border-white/10">
+          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-2" label={t("serverDetail.status")}>
             <span
               className={cn(
                 "inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white",
@@ -142,43 +144,51 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
               {info.online ? t("serverDetail.online") : t("serverDetail.offline")}
             </span>
           </DetailItem>
-          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.uptime")}>
-            {formatUptime(info.uptime, t("serverDetail.days"), t("serverDetail.hours"))}
-          </DetailItem>
-          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.arch")}>
-            {info.arch || t("serverDetail.unknown")}
-          </DetailItem>
-          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.mem")}>
-            {info.mem_total ? formatBytes(info.mem_total) : t("serverDetail.unknown")}
-          </DetailItem>
-          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.disk")}>
-            {info.disk_total ? formatBytes(info.disk_total) : t("serverDetail.unknown")}
-          </DetailItem>
-          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-1" label={t("serverDetail.region")}>
+          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-2" label={t("serverDetail.region")}>
             <span className="inline-flex items-center gap-1.5">
               {info.country_code?.toUpperCase() || t("serverDetail.unknown")}
               {info.country_code ? <ServerFlag country_code={info.country_code} /> : null}
             </span>
           </DetailItem>
-          <DetailItem className="col-span-2 px-4 py-3 sm:col-span-3" label={t("serverDetail.system")}>
+          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-2" label={t("serverDetail.arch")}>
+            {info.arch || t("serverDetail.unknown")}
+          </DetailItem>
+          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-2" label={t("serverDetail.mem")}>
+            {info.mem_total ? formatBytes(info.mem_total) : t("serverDetail.unknown")}
+          </DetailItem>
+          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-2" label={t("serverDetail.disk")}>
+            {info.disk_total ? formatBytes(info.disk_total) : t("serverDetail.unknown")}
+          </DetailItem>
+          <DetailItem className="px-4 py-3 sm:col-span-2 lg:col-span-2" label={t("serverDetail.uptime")}>
+            {formatUptime(info.uptime, t("serverDetail.days"), t("serverDetail.hours"))}
+          </DetailItem>
+          <DetailItem className="col-span-2 px-4 py-3 sm:col-span-3 lg:col-span-6" label={t("serverDetail.system")}>
             {[info.platform, info.platform_version].filter(Boolean).join(" · ") || t("serverDetail.unknown")}
           </DetailItem>
-          <DetailItem className="col-span-2 px-4 py-3 sm:col-span-3" label="CPU">
+          <DetailItem className="col-span-2 px-4 py-3 sm:col-span-3 lg:col-span-6" label="CPU">
             {info.cpu_info.filter(Boolean).join(", ") || t("serverDetail.unknown")}
           </DetailItem>
-          <DetailItem className="col-span-2 px-4 py-3" label="Load">
+          <DetailItem className={overviewMetricCellClass} label="Load">
             {info.load_1} / {info.load_5} / {info.load_15}
           </DetailItem>
-          <DetailItem className="col-span-2 px-4 py-3" label={t("serverDetail.upload")}>
+          {showTrafficInOverview && (
+            <div className={cn("min-w-0", overviewMetricCellClass)}>
+              <p className="text-[11px] leading-none text-white/55">{t("serverCard.trafficUsage")}</p>
+              <div className="mt-1">
+                <TrafficBar used={trafficUsed} limit={trafficLimit} resetDay={info.traffic_reset_day} limitType={info.traffic_limit_type} />
+              </div>
+            </div>
+          )}
+          <DetailItem className={overviewMetricCellClass} label={t("serverDetail.upload")}>
             {formatBytes(info.net_out_transfer)}
           </DetailItem>
-          <DetailItem className="col-span-2 px-4 py-3" label={t("serverDetail.download")}>
+          <DetailItem className={overviewMetricCellClass} label={t("serverDetail.download")}>
             {formatBytes(info.net_in_transfer)}
           </DetailItem>
         </div>
       </section>
 
-      {showDetailAssets && (showBillingSummary || showTraffic) && (
+      {showDetailAssets && showBillingSummary && (
         <section className="glass-card rounded-2xl border border-white/10 px-5 py-4 shadow-none backdrop-blur-md sm:px-6">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-white">{t("serverDetail.assetInfo")}</p>
@@ -192,20 +202,12 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
               {t("serverDetail.openCalculator")}
             </button>
           </div>
-          {showBillingSummary && (
-            <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-4 lg:grid-cols-4">
-              <DetailItem label={t("billingInfo.price")}>{billingPrice}</DetailItem>
-              <DetailItem label={t("serverDetail.remainingValue")}>{remainingValue}</DetailItem>
-              <DetailItem label={t("serverDetail.remainingDays")}>{remainingDays}</DetailItem>
-              <DetailItem label={t("serverDetail.expiryDate")}>{expiryDate}</DetailItem>
-            </div>
-          )}
-          {showTraffic && (
-            <div className={cn(showBillingSummary && "mt-4 border-t border-white/10 pt-4")}>
-              <p className="mb-2 text-[11px] leading-none text-white/55">{t("serverCard.trafficUsage")}</p>
-              <TrafficBar used={trafficUsed} limit={trafficLimit} resetDay={info.traffic_reset_day} limitType={info.traffic_limit_type} />
-            </div>
-          )}
+          <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-4 lg:grid-cols-4">
+            <DetailItem label={t("billingInfo.price")}>{billingPrice}</DetailItem>
+            <DetailItem label={t("serverDetail.remainingValue")}>{remainingValue}</DetailItem>
+            <DetailItem label={t("serverDetail.remainingDays")}>{remainingDays}</DetailItem>
+            <DetailItem label={t("serverDetail.expiryDate")}>{expiryDate}</DetailItem>
+          </div>
         </section>
       )}
 
