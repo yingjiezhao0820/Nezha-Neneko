@@ -155,13 +155,13 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
               title={`${t(selectedMonitorIds === null ? "monitor.viewOnly" : isActive ? "monitor.deselect" : "monitor.addSelection")} ${monitor.monitor_name}`}
               onClick={() => toggleMonitor(monitor.monitor_id)}
             >
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-0">
                 <span className="min-w-0 break-words text-xs leading-4 text-white/75">{monitor.monitor_name}</span>
                 <span className={cn("whitespace-nowrap text-right text-[10px] leading-4", getPacketLossColor(averageLoss))}>
                   {t("monitor.packetLoss")}
                 </span>
                 <p className="text-base font-semibold leading-none tabular-nums text-white">{getLatestDelay(monitor).toFixed(2)}ms</p>
-                <span className={cn("self-end text-right text-[10px] leading-none tabular-nums", getPacketLossColor(averageLoss))}>
+                <span className={cn("text-right text-xs font-semibold leading-4 tabular-nums", getPacketLossColor(averageLoss))}>
                   {averageLoss.toFixed(2)}%
                 </span>
               </div>
