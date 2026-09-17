@@ -1,339 +1,353 @@
 {
-    "name": "Nezha-Neneko",
-    "short": "Nezha-Neneko",
-    "description": "Nezha-Neneko Theme for Komari Monitor",
-    "version": "1.1.7.1",
-    "author": "Neneko",
-    "url": "https://github.com/yingjiezhao0820/Nezha-Neneko/",
-    "preview": "preview.png",
-    "configuration": {
-        "type": "managed",
-        "data": [
-            {
-                "name": "外观设置",
-                "type": "title"
-            },
-            {
-                "key": "CustomBackgroundImage",
-                "name": "背景图片",
-                "type": "input",
-                "default": "",
-                "help": "桌面端背景图片URL，留空则不显示背景图。支持图片直链或随机图API。"
-            },
-            {
-                "key": "CustomMobileBackgroundImage",
-                "name": "移动端背景图片",
-                "type": "input",
-                "default": "",
-                "help": "移动端单独的背景图片URL，留空则跟随桌面端设置。"
-            },
-            {
-                "key": "CustomLogo",
-                "name": "站点Logo",
-                "type": "input",
-                "default": "/favicon.ico",
-                "help": "站点Logo图片URL，显示在左上角和浏览器标签页。"
-            },
-            {
-                "key": "CustomIllustration",
-                "name": "自定义插图",
-                "type": "input",
-                "default": "",
-                "help": "首页右侧的自定义插图URL，留空使用默认插图。"
-            },
-            {
-                "key": "ForceTheme",
-                "name": "强制主题",
-                "type": "select",
-                "options": "跟随系统,dark,light",
-                "default": "跟随系统",
-                "help": "强制使用指定主题模式，选择'跟随系统'则由用户自行切换。"
-            },
-            {
-                "name": "功能设置",
-                "type": "title"
-            },
-            {
-                "key": "CustomLinks",
-                "name": "自定义链接",
-                "type": "input",
-                "default": "",
-                "help": "JSON格式的自定义链接数组，显示在顶部导航栏。格式: [{\"link\":\"https://example.com\",\"name\":\"示例\"}]"
-            },
-            {
-                "key": "ForceShowServices",
-                "name": "显示服务监控",
-                "type": "switch",
-                "default": false,
-                "help": "开启后在首页显示ServiceTracker服务监控面板（30天可用性监控）。"
-            },
-            {
-                "key": "ForceShowMap",
-                "name": "显示全球地图",
-                "type": "switch",
-                "default": false,
-                "help": "开启后在首页显示服务器全球分布地图。"
-            },
-            {
-                "key": "ForceCardInline",
-                "name": "行内卡片模式",
-                "type": "switch",
-                "default": false,
-                "help": "开启后服务器卡片使用紧凑的行内布局模式。"
-            },
-            {
-                "key": "GroupOrder",
-                "name": "分组显示顺序",
-                "type": "input",
-                "default": "",
-                "help": "自定义首页分组顺序，All 固定最前。支持逗号/换行分隔或 JSON 数组，例如 香港,日本,美国。未列出的分组会按名称排在后面。"
-            },
-            {
-                "key": "DisableAnimatedMan",
-                "name": "禁用动画插图",
-                "type": "switch",
-                "default": true,
-                "help": "开启后隐藏首页的动画人物插图。默认已开启（隐藏）。"
-            },
-            {
-                "key": "ForceUseSvgFlag",
-                "name": "使用SVG国旗",
-                "type": "switch",
-                "default": false,
-                "help": "开启后使用SVG国旗图标替代Emoji国旗。在 Komari 节点 tags 中添加 <TAG:TW> 可覆盖节点国家并显示台湾地区旗帜，其他地区请填写两位国家或地区代码。"
-            },
-            {
-                "key": "ShowTrafficBar",
-                "name": "显示流量统计条",
-                "type": "switch",
-                "default": true,
-                "help": "控制首页服务器卡片是否显示流量用量、限额及进度条（需后台配置流量限额）。"
-            },
-            {
-                "key": "ShowVisitorCapsule",
-                "name": "显示访客胶囊",
-                "type": "switch",
-                "default": false,
-                "help": "开启后在页面底部短暂显示访客 IP、地区和运营商信息。"
-            },
-            {
-                "key": "ShowOnlineVisitorCount",
-                "name": "显示在线访客人数",
-                "type": "switch",
-                "default": false,
-                "help": "开启后右上角显示当前在线访客人数并每 45 秒刷新；关闭时显示登录图标。两种状态均可点击进入后台登录。"
-            },
-            {
-                "key": "ShowGroupBar",
-                "name": "显示首页分组栏",
-                "type": "switch",
-                "default": true,
-                "help": "控制首页地图、服务、布局、服务器分组与排序组成的整栏是否显示。"
-            },
-            {
-                "key": "VisitorCapsuleColor",
-                "name": "访客胶囊颜色",
-                "type": "select",
-                "options": "blue,green,purple,pink,orange,red,cyan,amber",
-                "default": "blue",
-                "help": "访客胶囊的主色调，亮/暗模式自动配套。"
-            },
-            {
-                "key": "ShowAssetCard",
-                "name": "显示资产卡片",
-                "type": "switch",
-                "default": false,
-                "help": "开启后显示右上角资产统计浮窗，账单金额会使用默认货币和服务器货币覆盖配置。"
-            },
-            {
-                "key": "ShowServerDetailAssets",
-                "name": "显示详情资产信息",
-                "type": "switch",
-                "default": false,
-                "help": "开启后在服务器详情页显示资费、剩余价值、剩余天数、到期时间、流量进度及当前服务器的资费计算快捷入口。"
-            },
-            {
-                "key": "AssetCardColor",
-                "name": "资产卡片颜色",
-                "type": "select",
-                "options": "blue,green,purple,pink,orange,red,cyan,amber,black,white",
-                "default": "blue",
-                "help": "资产卡片浮窗的主色调，支持彩色、黑色和白色，亮/暗模式自动配套。"
-            },
-            {
-                "key": "AssetCardOpacity",
-                "name": "资产弹窗透明度",
-                "type": "select",
-                "options": "20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95",
-                "default": "65",
-                "help": "单独控制资产统计面板和服务器交易弹窗的背景透明度，不影响其他卡片。"
-            },
-            {
-                "key": "AssetCardDefaultCurrency",
-                "name": "资产卡片默认币种",
-                "type": "select",
-                "options": "CNY,USD,HKD,EUR,GBP,JPY",
-                "default": "CNY",
-                "help": "资产卡片汇总金额的默认显示币种，访客仍可在资产卡片内临时切换。"
-            },
-            {
-                "key": "ForcePeakCutEnabled",
-                "name": "网络图表削峰",
-                "type": "switch",
-                "default": false,
-                "help": "开启后网络流量图表会自动裁剪异常峰值，使图表更易读。"
-            },
-            {
-                "key": "ServerDetailMonitorHours",
-                "name": "详情检测图表周期",
-                "type": "select",
-                "options": "1,3,6,12,24,48,72,168,336,720",
-                "default": "24",
-                "help": "设置服务器详情页检测图表查询的时间范围，单位为小时；默认显示最近 24 小时。"
-            },
-            {
-                "name": "卡片显示设置",
-                "type": "title"
-            },
-            {
-                "key": "CardGlassColor",
-                "name": "卡片毛玻璃颜色",
-                "type": "select",
-                "options": "slate,neutral,zinc,gray,black,white,blue,indigo,purple,emerald",
-                "default": "slate",
-                "help": "设置首页、详情页及资产卡片的毛玻璃背景色，支持白色毛玻璃。"
-            },
-            {
-                "key": "CardGlassOpacity",
-                "name": "卡片背景透明度",
-                "type": "select",
-                "options": "15,20,25,30,35,40,45,50,55,60,70,80",
-                "default": "35",
-                "help": "数值越小越透明、越轻盈；数值越大背景颜色越明显。"
-            },
-            {
-                "key": "EnableServerCardHoverAnimation",
-                "name": "首页卡片悬停动画",
-                "type": "switch",
-                "default": false,
-                "help": "开启后首页标准卡片和行内卡片会在鼠标悬停时轻微浮起、放大并增加阴影。"
-            },
-            {
-                "key": "EnableRemainingValueRotation",
-                "name": "轮播剩余价值",
-                "type": "switch",
-                "default": false,
-                "help": "开启后首页服务器卡片会在剩余天数与剩余价值之间循环切换，默认关闭。"
-            },
-            {
-                "key": "RemainingValueRotationInterval",
-                "name": "剩余价值轮播间隔",
-                "type": "select",
-                "options": "2,3,5,8,10,15,20,30,45,60",
-                "default": "5",
-                "help": "设置剩余天数与剩余价值的切换间隔，单位为秒；仅在开启轮播剩余价值后生效。"
-            },
-            {
-                "key": "FixedTopServerName",
-                "name": "固定顶部服务器名称",
-                "type": "switch",
-                "default": false,
-                "help": "开启后服务器名称固定在卡片顶部，资源信息显示在下方。"
-            },
-            {
-                "key": "ShowServerTags",
-                "name": "显示服务器标签",
-                "type": "switch",
-                "default": true,
-                "help": "控制首页服务器卡片是否显示带宽、流量、IP、线路和自定义标签。"
-            },
-            {
-                "key": "ShowNetTransfer",
-                "name": "显示上下行流量",
-                "type": "switch",
-                "default": false,
-                "help": "开启后在服务器卡片底部显示上传和下载总流量。"
-            },
-            {
-                "key": "HideIPv4IPv6Tag",
-                "name": "隐藏IPv4/IPv6标签",
-                "type": "switch",
-                "default": false,
-                "help": "开启后隐藏服务器卡片上默认显示的IPv4和IPv6标签。"
-            },
-            {
-                "key": "HideTrafficVolTag",
-                "name": "隐藏流量标签",
-                "type": "switch",
-                "default": false,
-                "help": "开启后隐藏服务器卡片上显示的流量标签。"
-            },
-            {
-                "name": "账单货币设置",
-                "type": "title"
-            },
-            {
-                "key": "DefaultBillingCurrency",
-                "name": "默认账单货币",
-                "type": "select",
-                "options": "跟随后端,CNY,JPY,USD,EUR,HKD,TWD,KRW,SGD,CAD,AUD",
-                "default": "跟随后端",
-                "help": "没有单独覆盖时使用的货币。选择跟随后端时使用 Komari 节点的 currency 字段；后端填裸 ¥/￥ 时按 CNY 识别，日元建议填 JPY、JP¥ 或单独覆盖。"
-            },
-            {
-                "key": "CnySymbolStyle",
-                "name": "人民币显示风格",
-                "type": "select",
-                "options": "¥,CNY",
-                "default": "¥",
-                "help": "人民币金额前缀。¥ 视觉简洁，适合部署里大部分是人民币、少数是日元的场景（日元会自动加 JPY 文字消歧义）。日元为主的部署可切到 CNY 文字。"
-            },
-            {
-                "key": "ServerBillingCurrencyOverrides",
-                "name": "服务器货币覆盖",
-                "type": "input",
-                "default": "",
-                "help": "JSON对象，按服务器UUID、卡片ID或名称指定货币，例如 {\"Tokyo\":\"JPY\",\"spartanhost\":\"USD\"}。【更推荐】直接在 Komari 后端服务器的 tags 字段里加 <JPY>/<USD>/<CNY> 等元标签，例如把 KDDI 的 tags 改成 \"Tokyonline; KDDI; <JPY>\"，主题会自动识别且不在前端显示该标签。优先级：本JSON > tags元标签 > 默认账单货币 > 后端currency字段。"
-            },
-            {
-                "name": "流量进度条设置",
-                "type": "title"
-            },
-            {
-                "key": "TrafficBarInMetricRow",
-                "name": "流量条嵌入指标栏",
-                "type": "switch",
-                "default": false,
-                "help": "开启后将实时上传/下载合并为“网速”格，并把“流量”进度放入释放出的指标格；关闭时继续在卡片底部显示完整流量条。"
-            },
-            {
-                "key": "TrafficBarShowPercent",
-                "name": "显示百分比",
-                "type": "switch",
-                "default": true,
-                "help": "在流量进度条右上角显示已用百分比。"
-            },
-            {
-                "key": "TrafficBarShowResetDay",
-                "name": "显示流量重置日",
-                "type": "switch",
-                "default": true,
-                "help": "在流量进度条右上角显示距离流量重置的天数。"
-            },
-            {
-                "key": "TrafficBarShowBillingMode",
-                "name": "显示计费模式",
-                "type": "switch",
-                "default": true,
-                "help": "在流量进度条右上角显示计费模式（双向/单向等）。"
-            },
-            {
-                "key": "TrafficResetDayOverrides",
-                "name": "流量重置日覆盖",
-                "type": "input",
-                "default": "",
-                "help": "JSON对象，按服务器UUID、卡片ID或名称指定每月流量重置日，例如 {\"Tokyo\":1,\"server-uuid\":15}。更推荐直接在 Komari 节点 tags 里加 <TRD:1> 这类元标签；tags 优先级最高，本配置作为兜底。都没有时显示 N/A。"
-            }
-        ]
-    }
+  "name": "Nezha-Neneko",
+  "short": "Nezha-Neneko",
+  "description": "Nezha-Neneko Theme for Komari Monitor",
+  "version": "1.1.7.1",
+  "author": "Neneko",
+  "url": "https://github.com/yingjiezhao0820/Nezha-Neneko/",
+  "preview": "preview.png",
+  "configuration": {
+    "type": "managed",
+    "data": [
+      {
+        "name": "外观设置",
+        "type": "title"
+      },
+      {
+        "key": "CustomBackgroundImage",
+        "name": "背景图片",
+        "type": "input",
+        "default": "",
+        "help": "桌面端背景图片URL，留空则不显示背景图。支持图片直链或随机图API。"
+      },
+      {
+        "key": "CustomMobileBackgroundImage",
+        "name": "移动端背景图片",
+        "type": "input",
+        "default": "",
+        "help": "移动端单独的背景图片URL，留空则跟随桌面端设置。"
+      },
+      {
+        "key": "CustomLogo",
+        "name": "站点Logo",
+        "type": "input",
+        "default": "/favicon.ico",
+        "help": "站点Logo图片URL，显示在左上角和浏览器标签页。"
+      },
+      {
+        "key": "CustomIllustration",
+        "name": "自定义插图",
+        "type": "input",
+        "default": "",
+        "help": "首页右侧的自定义插图URL，留空使用默认插图。"
+      },
+      {
+        "key": "ForceTheme",
+        "name": "强制主题",
+        "type": "select",
+        "options": "跟随系统,dark,light",
+        "default": "跟随系统",
+        "help": "强制使用指定主题模式，选择'跟随系统'则由用户自行切换。"
+      },
+      {
+        "name": "功能设置",
+        "type": "title"
+      },
+      {
+        "key": "CustomLinks",
+        "name": "自定义链接",
+        "type": "input",
+        "default": "",
+        "help": "JSON格式的自定义链接数组，显示在顶部导航栏。格式: [{\"link\":\"https://example.com\",\"name\":\"示例\"}]"
+      },
+      {
+        "key": "ForceShowServices",
+        "name": "显示服务监控",
+        "type": "switch",
+        "default": false,
+        "help": "开启后在首页显示ServiceTracker服务监控面板（30天可用性监控）。"
+      },
+      {
+        "key": "ForceShowMap",
+        "name": "显示全球地图",
+        "type": "switch",
+        "default": false,
+        "help": "开启后在首页显示服务器全球分布地图。"
+      },
+      {
+        "key": "ForceCardInline",
+        "name": "行内卡片模式",
+        "type": "switch",
+        "default": false,
+        "help": "开启后服务器卡片使用紧凑的行内布局模式。"
+      },
+      {
+        "key": "GroupOrder",
+        "name": "分组显示顺序",
+        "type": "input",
+        "default": "",
+        "help": "自定义首页分组顺序，All 固定最前。支持逗号/换行分隔或 JSON 数组，例如 香港,日本,美国。未列出的分组会按名称排在后面。"
+      },
+      {
+        "key": "DisableAnimatedMan",
+        "name": "禁用动画插图",
+        "type": "switch",
+        "default": true,
+        "help": "开启后隐藏首页的动画人物插图。默认已开启（隐藏）。"
+      },
+      {
+        "key": "ForceUseSvgFlag",
+        "name": "使用SVG国旗",
+        "type": "switch",
+        "default": false,
+        "help": "开启后使用SVG国旗图标替代Emoji国旗。在 Komari 节点 tags 中添加 <TAG:TW> 可覆盖节点国家并显示台湾地区旗帜，其他地区请填写两位国家或地区代码。"
+      },
+      {
+        "key": "ShowTrafficBar",
+        "name": "显示流量统计条",
+        "type": "switch",
+        "default": true,
+        "help": "控制首页服务器卡片是否显示流量用量、限额及进度条（需后台配置流量限额）。"
+      },
+      {
+        "key": "ShowVisitorCapsule",
+        "name": "显示访客胶囊",
+        "type": "switch",
+        "default": false,
+        "help": "开启后在页面底部短暂显示访客 IP、地区和运营商信息。"
+      },
+      {
+        "key": "ShowOnlineVisitorCount",
+        "name": "显示在线访客人数",
+        "type": "switch",
+        "default": false,
+        "help": "开启后右上角显示当前在线访客人数并每 45 秒刷新；关闭时显示登录图标。是否允许点击登录由“启用后台登录跳转”控制。"
+      },
+      {
+        "key": "EnableOnlineVisitorLogin",
+        "name": "启用后台登录跳转",
+        "type": "switch",
+        "default": false,
+        "help": "默认关闭。开启后右上角在线访客或登录图标才可点击，并跳转到下方配置的后台登录地址。"
+      },
+      {
+        "key": "OnlineVisitorLoginUrl",
+        "name": "后台登录地址",
+        "type": "input",
+        "default": "",
+        "help": "启用后台登录跳转后必填。支持站内绝对路径或 HTTP(S) 地址，例如 /admin 或 https://example.com/admin。留空或格式无效时不会启用点击。"
+      },
+      {
+        "key": "ShowGroupBar",
+        "name": "显示首页分组栏",
+        "type": "switch",
+        "default": true,
+        "help": "控制首页地图、服务、布局、服务器分组与排序组成的整栏是否显示。"
+      },
+      {
+        "key": "VisitorCapsuleColor",
+        "name": "访客胶囊颜色",
+        "type": "select",
+        "options": "blue,green,purple,pink,orange,red,cyan,amber",
+        "default": "blue",
+        "help": "访客胶囊的主色调，亮/暗模式自动配套。"
+      },
+      {
+        "key": "ShowAssetCard",
+        "name": "显示资产卡片",
+        "type": "switch",
+        "default": false,
+        "help": "开启后显示右上角资产统计浮窗，账单金额会使用默认货币和服务器货币覆盖配置。"
+      },
+      {
+        "key": "ShowServerDetailAssets",
+        "name": "显示详情资产信息",
+        "type": "switch",
+        "default": false,
+        "help": "开启后在服务器详情页显示资费、剩余价值、剩余天数、到期时间、流量进度及当前服务器的资费计算快捷入口。"
+      },
+      {
+        "key": "AssetCardColor",
+        "name": "资产卡片颜色",
+        "type": "select",
+        "options": "blue,green,purple,pink,orange,red,cyan,amber,black,white",
+        "default": "blue",
+        "help": "资产卡片浮窗的主色调，支持彩色、黑色和白色，亮/暗模式自动配套。"
+      },
+      {
+        "key": "AssetCardOpacity",
+        "name": "资产弹窗透明度",
+        "type": "select",
+        "options": "20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95",
+        "default": "65",
+        "help": "单独控制资产统计面板和服务器交易弹窗的背景透明度，不影响其他卡片。"
+      },
+      {
+        "key": "AssetCardDefaultCurrency",
+        "name": "资产卡片默认币种",
+        "type": "select",
+        "options": "CNY,USD,HKD,EUR,GBP,JPY",
+        "default": "CNY",
+        "help": "资产卡片汇总金额的默认显示币种，访客仍可在资产卡片内临时切换。"
+      },
+      {
+        "key": "ForcePeakCutEnabled",
+        "name": "网络图表削峰",
+        "type": "switch",
+        "default": false,
+        "help": "开启后网络流量图表会自动裁剪异常峰值，使图表更易读。"
+      },
+      {
+        "key": "ServerDetailMonitorHours",
+        "name": "详情检测图表周期",
+        "type": "select",
+        "options": "1,3,6,12,24,48,72,168,336,720",
+        "default": "24",
+        "help": "设置服务器详情页检测图表查询的时间范围，单位为小时；默认显示最近 24 小时。"
+      },
+      {
+        "name": "卡片显示设置",
+        "type": "title"
+      },
+      {
+        "key": "CardGlassColor",
+        "name": "卡片毛玻璃颜色",
+        "type": "select",
+        "options": "slate,neutral,zinc,gray,black,white,blue,indigo,purple,emerald",
+        "default": "slate",
+        "help": "设置首页、详情页及资产卡片的毛玻璃背景色，支持白色毛玻璃。"
+      },
+      {
+        "key": "CardGlassOpacity",
+        "name": "卡片背景透明度",
+        "type": "select",
+        "options": "15,20,25,30,35,40,45,50,55,60,70,80",
+        "default": "35",
+        "help": "数值越小越透明、越轻盈；数值越大背景颜色越明显。"
+      },
+      {
+        "key": "EnableServerCardHoverAnimation",
+        "name": "首页卡片悬停动画",
+        "type": "switch",
+        "default": false,
+        "help": "开启后首页标准卡片和行内卡片会在鼠标悬停时轻微浮起、放大并增加阴影。"
+      },
+      {
+        "key": "EnableRemainingValueRotation",
+        "name": "轮播剩余价值",
+        "type": "switch",
+        "default": false,
+        "help": "开启后首页服务器卡片会在剩余天数与剩余价值之间循环切换，默认关闭。"
+      },
+      {
+        "key": "RemainingValueRotationInterval",
+        "name": "剩余价值轮播间隔",
+        "type": "select",
+        "options": "2,3,5,8,10,15,20,30,45,60",
+        "default": "5",
+        "help": "设置剩余天数与剩余价值的切换间隔，单位为秒；仅在开启轮播剩余价值后生效。"
+      },
+      {
+        "key": "FixedTopServerName",
+        "name": "固定顶部服务器名称",
+        "type": "switch",
+        "default": false,
+        "help": "开启后服务器名称固定在卡片顶部，资源信息显示在下方。"
+      },
+      {
+        "key": "ShowServerTags",
+        "name": "显示服务器标签",
+        "type": "switch",
+        "default": true,
+        "help": "控制首页服务器卡片是否显示带宽、流量、IP、线路和自定义标签。"
+      },
+      {
+        "key": "ShowNetTransfer",
+        "name": "显示上下行流量",
+        "type": "switch",
+        "default": false,
+        "help": "开启后在服务器卡片底部显示上传和下载总流量。"
+      },
+      {
+        "key": "HideIPv4IPv6Tag",
+        "name": "隐藏IPv4/IPv6标签",
+        "type": "switch",
+        "default": false,
+        "help": "开启后隐藏服务器卡片上默认显示的IPv4和IPv6标签。"
+      },
+      {
+        "key": "HideTrafficVolTag",
+        "name": "隐藏流量标签",
+        "type": "switch",
+        "default": false,
+        "help": "开启后隐藏服务器卡片上显示的流量标签。"
+      },
+      {
+        "name": "账单货币设置",
+        "type": "title"
+      },
+      {
+        "key": "DefaultBillingCurrency",
+        "name": "默认账单货币",
+        "type": "select",
+        "options": "跟随后端,CNY,JPY,USD,EUR,HKD,TWD,KRW,SGD,CAD,AUD",
+        "default": "跟随后端",
+        "help": "没有单独覆盖时使用的货币。选择跟随后端时使用 Komari 节点的 currency 字段；后端填裸 ¥/￥ 时按 CNY 识别，日元建议填 JPY、JP¥ 或单独覆盖。"
+      },
+      {
+        "key": "CnySymbolStyle",
+        "name": "人民币显示风格",
+        "type": "select",
+        "options": "¥,CNY",
+        "default": "¥",
+        "help": "人民币金额前缀。¥ 视觉简洁，适合部署里大部分是人民币、少数是日元的场景（日元会自动加 JPY 文字消歧义）。日元为主的部署可切到 CNY 文字。"
+      },
+      {
+        "key": "ServerBillingCurrencyOverrides",
+        "name": "服务器货币覆盖",
+        "type": "input",
+        "default": "",
+        "help": "JSON对象，按服务器UUID、卡片ID或名称指定货币，例如 {\"Tokyo\":\"JPY\",\"spartanhost\":\"USD\"}。【更推荐】直接在 Komari 后端服务器的 tags 字段里加 <JPY>/<USD>/<CNY> 等元标签，例如把 KDDI 的 tags 改成 \"Tokyonline; KDDI; <JPY>\"，主题会自动识别且不在前端显示该标签。优先级：本JSON > tags元标签 > 默认账单货币 > 后端currency字段。"
+      },
+      {
+        "name": "流量进度条设置",
+        "type": "title"
+      },
+      {
+        "key": "TrafficBarInMetricRow",
+        "name": "流量条嵌入指标栏",
+        "type": "switch",
+        "default": false,
+        "help": "开启后将实时上传/下载合并为“网速”格，并把“流量”进度放入释放出的指标格；关闭时继续在卡片底部显示完整流量条。"
+      },
+      {
+        "key": "TrafficBarShowPercent",
+        "name": "显示百分比",
+        "type": "switch",
+        "default": true,
+        "help": "在流量进度条右上角显示已用百分比。"
+      },
+      {
+        "key": "TrafficBarShowResetDay",
+        "name": "显示流量重置日",
+        "type": "switch",
+        "default": true,
+        "help": "在流量进度条右上角显示距离流量重置的天数。"
+      },
+      {
+        "key": "TrafficBarShowBillingMode",
+        "name": "显示计费模式",
+        "type": "switch",
+        "default": true,
+        "help": "在流量进度条右上角显示计费模式（双向/单向等）。"
+      },
+      {
+        "key": "TrafficResetDayOverrides",
+        "name": "流量重置日覆盖",
+        "type": "input",
+        "default": "",
+        "help": "JSON对象，按服务器UUID、卡片ID或名称指定每月流量重置日，例如 {\"Tokyo\":1,\"server-uuid\":15}。更推荐直接在 Komari 节点 tags 里加 <TRD:1> 这类元标签；tags 优先级最高，本配置作为兜底。都没有时显示 N/A。"
+      }
+    ]
+  }
 }

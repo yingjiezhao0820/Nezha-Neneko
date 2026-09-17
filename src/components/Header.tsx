@@ -16,6 +16,21 @@ import { LanguageSwitcher } from "./LanguageSwitcher"
 import { LoadingSpinner } from "./loading/Loader"
 import { Button } from "./ui/button"
 
+function resolveLoginUrl(value: unknown) {
+  if (typeof value !== "string") return null
+
+  const url = value.trim()
+  if (!url) return null
+  if (url.startsWith("/") && !url.startsWith("//")) return url
+
+  try {
+    const parsedUrl = new URL(url)
+    return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:" ? url : null
+  } catch {
+    return null
+  }
+}
+
 function Header() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -30,6 +45,8 @@ function Header() {
   const themeSettings = window as unknown as Record<string, unknown>
   const showAssetCard = themeSettings.ShowAssetCard === true
   const showOnlineVisitorCount = themeSettings.ShowOnlineVisitorCount === true
+  const enableOnlineVisitorLogin = themeSettings.EnableOnlineVisitorLogin === true
+  const onlineVisitorLoginUrl = enableOnlineVisitorLogin ? resolveLoginUrl(themeSettings.OnlineVisitorLoginUrl) : null
   const { onlineCount, isAvailable: isOnlineCountAvailable } = useOnlineVisitorCount(showOnlineVisitorCount)
 
   const siteName = settingData?.data?.config?.site_name
@@ -53,6 +70,19 @@ function Header() {
   // useEffect(() => {
   //   document.title = siteName || "哪吒监控 Nezha Monitoring"
   // }, [siteName])
+
+  const onlineVisitorStatus = (
+    <span role="status" aria-live="polite" className="contents">
+      <span className="font-semibold tabular-nums">{onlineCount ?? "..."}</span>
+      <span>{t("online")}</span>
+      <span
+        aria-hidden="true"
+        className={`size-1.5 rounded-full ${isOnlineCountAvailable ? "bg-emerald-400 shadow-[0_0_7px_rgba(52,211,153,0.9)]" : "bg-white/35"}`}
+      />
+    </span>
+  )
+  const onlineVisitorClassName = `glass-card flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 px-3 text-[11px] font-medium text-white shadow-none backdrop-blur-md ${onlineVisitorLoginUrl ? "glass-card-interactive hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60" : ""}`
+  const loginIconClassName = `glass-card flex size-9 shrink-0 items-center justify-center rounded-full border border-white/10 text-white shadow-none backdrop-blur-md ${onlineVisitorLoginUrl ? "glass-card-interactive hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60" : ""}`
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -97,34 +127,35 @@ function Header() {
           )}
           <LanguageSwitcher />
           {showOnlineVisitorCount ? (
+            onlineVisitorLoginUrl ? (
+              <a
+                href={onlineVisitorLoginUrl}
+                target="_blank"
+                rel="noreferrer"
+                title={t("login")}
+                aria-label={`${onlineCount ?? "..."} ${t("online")} · ${t("login")}`}
+                className={onlineVisitorClassName}
+              >
+                {onlineVisitorStatus}
+              </a>
+            ) : (
+              <div className={onlineVisitorClassName}>{onlineVisitorStatus}</div>
+            )
+          ) : onlineVisitorLoginUrl ? (
             <a
-              href="/admin"
+              href={onlineVisitorLoginUrl}
               target="_blank"
               rel="noreferrer"
+              aria-label={t("login")}
               title={t("login")}
-              aria-label={`${onlineCount ?? "..."} ${t("online")} · ${t("login")}`}
-              className="glass-card glass-card-interactive flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 px-3 text-[11px] font-medium text-white shadow-none backdrop-blur-md hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              className={loginIconClassName}
             >
-              <span role="status" aria-live="polite" className="contents">
-                <span className="font-semibold tabular-nums">{onlineCount ?? "..."}</span>
-                <span>{t("online")}</span>
-                <span
-                  aria-hidden="true"
-                  className={`size-1.5 rounded-full ${isOnlineCountAvailable ? "bg-emerald-400 shadow-[0_0_7px_rgba(52,211,153,0.9)]" : "bg-white/35"}`}
-                />
-              </span>
+              <LogIn className="size-4" />
             </a>
           ) : (
-            <a href="/admin" target="_blank" rel="noreferrer" aria-label={t("login")}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="glass-card glass-card-interactive rounded-full border-white/10 px-[9px] text-white shadow-none backdrop-blur-md hover:text-white"
-                title={t("login")}
-              >
-                <LogIn className="size-4" />
-              </Button>
-            </a>
+            <span aria-hidden="true" className={loginIconClassName}>
+              <LogIn className="size-4" />
+            </span>
           )}
         </section>
       </section>

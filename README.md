@@ -80,32 +80,34 @@ npm run build
 
 所有设置均可在 Komari 主题配置页面中修改。
 
-| 配置项                           | 作用                                                         |
-| -------------------------------- | ------------------------------------------------------------ |
-| `CustomBackgroundImage`          | 设置桌面端背景图片                                           |
-| `CustomMobileBackgroundImage`    | 设置移动端独立背景图片                                       |
-| `CustomLogo`                     | 设置站点 Logo 和浏览器图标                                   |
-| `ForceTheme`                     | 强制亮色、暗色或跟随系统                                     |
-| `CardGlassColor`                 | 设置通用毛玻璃卡片颜色，支持白色                             |
-| `CardGlassOpacity`               | 设置首页和详情卡片背景透明度                                 |
-| `EnableServerCardHoverAnimation` | 开启首页服务器卡片浮起、缩放和阴影动画，默认关闭             |
-| `EnableRemainingValueRotation`   | 在首页卡片轮播剩余天数与剩余价值，默认关闭                   |
-| `RemainingValueRotationInterval` | 设置剩余价值轮播间隔，单位为秒                               |
-| `ShowGroupBar`                   | 控制首页地图、服务、布局、分组和排序整栏                     |
-| `ForceCardInline`                | 启用紧凑行内卡片布局                                         |
-| `ShowServerTags`                 | 显示或隐藏服务器可见标签                                     |
-| `ShowTrafficBar`                 | 显示服务器卡片流量进度条                                     |
-| `TrafficBarInMetricRow`          | 将流量进度嵌入指标栏，并合并上传/下载为网速                  |
-| `TrafficResetDayOverrides`       | 按 UUID、服务器 ID 或名称覆盖流量重置日                      |
-| `ShowOnlineVisitorCount`         | 右上角显示在线访客人数；关闭时显示登录图标，两者均可点击登录 |
-| `ShowAssetCard`                  | 启用资产统计入口和面板                                       |
-| `ShowServerDetailAssets`         | 显示详情页资产与流量区域，默认关闭                           |
-| `AssetCardDefaultCurrency`       | 设置资产统计默认币种                                         |
-| `AssetCardOpacity`               | 单独设置资产面板和交易弹窗透明度                             |
-| `DefaultBillingCurrency`         | 设置默认账单币种或跟随后端                                   |
-| `ServerBillingCurrencyOverrides` | 按服务器覆盖账单币种                                         |
-| `ForcePeakCutEnabled`            | 裁剪网络图表异常峰值，提高可读性                             |
-| `ServerDetailMonitorHours`       | 设置详情页检测图表时间范围，默认 24 小时                     |
+| 配置项                           | 作用                                                 |
+| -------------------------------- | ---------------------------------------------------- |
+| `CustomBackgroundImage`          | 设置桌面端背景图片                                   |
+| `CustomMobileBackgroundImage`    | 设置移动端独立背景图片                               |
+| `CustomLogo`                     | 设置站点 Logo 和浏览器图标                           |
+| `ForceTheme`                     | 强制亮色、暗色或跟随系统                             |
+| `CardGlassColor`                 | 设置通用毛玻璃卡片颜色，支持白色                     |
+| `CardGlassOpacity`               | 设置首页和详情卡片背景透明度                         |
+| `EnableServerCardHoverAnimation` | 开启首页服务器卡片浮起、缩放和阴影动画，默认关闭     |
+| `EnableRemainingValueRotation`   | 在首页卡片轮播剩余天数与剩余价值，默认关闭           |
+| `RemainingValueRotationInterval` | 设置剩余价值轮播间隔，单位为秒                       |
+| `ShowGroupBar`                   | 控制首页地图、服务、布局、分组和排序整栏             |
+| `ForceCardInline`                | 启用紧凑行内卡片布局                                 |
+| `ShowServerTags`                 | 显示或隐藏服务器可见标签                             |
+| `ShowTrafficBar`                 | 显示服务器卡片流量进度条                             |
+| `TrafficBarInMetricRow`          | 将流量进度嵌入指标栏，并合并上传/下载为网速          |
+| `TrafficResetDayOverrides`       | 按 UUID、服务器 ID 或名称覆盖流量重置日              |
+| `ShowOnlineVisitorCount`         | 右上角显示在线访客人数；关闭时显示登录图标           |
+| `EnableOnlineVisitorLogin`       | 启用右上角在线访客或登录图标的后台登录跳转，默认关闭 |
+| `OnlineVisitorLoginUrl`          | 设置后台登录地址，例如 `/admin`；开关开启后必填      |
+| `ShowAssetCard`                  | 启用资产统计入口和面板                               |
+| `ShowServerDetailAssets`         | 显示详情页资产与流量区域，默认关闭                   |
+| `AssetCardDefaultCurrency`       | 设置资产统计默认币种                                 |
+| `AssetCardOpacity`               | 单独设置资产面板和交易弹窗透明度                     |
+| `DefaultBillingCurrency`         | 设置默认账单币种或跟随后端                           |
+| `ServerBillingCurrencyOverrides` | 按服务器覆盖账单币种                                 |
+| `ForcePeakCutEnabled`            | 裁剪网络图表异常峰值，提高可读性                     |
+| `ServerDetailMonitorHours`       | 设置详情页检测图表时间范围，默认 24 小时             |
 
 其余选项及帮助文本请参阅 [`komari-theme.json`](./komari-theme.json)。
 
