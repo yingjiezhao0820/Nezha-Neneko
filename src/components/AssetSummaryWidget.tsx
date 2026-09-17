@@ -15,7 +15,7 @@ import {
 } from "@/lib/utils"
 import { NezhaServer } from "@/types/nezha-api"
 import { Check, CircleDollarSign, Copy, Heart, HelpCircle, RefreshCw, X } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 type AssetSummaryWidgetProps = {
   now: number
@@ -249,6 +249,7 @@ function FinanceRow({ label, value, accentClass }: { label: string; value: strin
 
 export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetProps) {
   const [open, setOpen] = useState(false)
+  const summaryRef = useRef<HTMLElement>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [targetCurrency, setTargetCurrency] = useState(getInitialCurrency)
   const [sortBy, setSortBy] = useState<AssetSort>((localStorage.getItem("asset_card_sort") as AssetSort) || "weight_asc")
@@ -264,6 +265,31 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
     window.addEventListener(ASSET_SUMMARY_OPEN_EVENT, openAssetSummary)
     return () => window.removeEventListener(ASSET_SUMMARY_OPEN_EVENT, openAssetSummary)
   }, [])
+
+  useEffect(() => {
+    if (!open && !tradeItem) return
+
+    const closeTopmostOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      if (tradeItem) setTradeItem(null)
+      else setOpen(false)
+    }
+
+    window.addEventListener("keydown", closeTopmostOnEscape)
+    return () => window.removeEventListener("keydown", closeTopmostOnEscape)
+  }, [open, tradeItem])
+
+  useEffect(() => {
+    if (!open || tradeItem) return
+
+    const closeSummaryOnOutsidePress = (event: PointerEvent) => {
+      const target = event.target
+      if (target instanceof Node && !summaryRef.current?.contains(target)) setOpen(false)
+    }
+
+    document.addEventListener("pointerdown", closeSummaryOnOutsidePress)
+    return () => document.removeEventListener("pointerdown", closeSummaryOnOutsidePress)
+  }, [open, tradeItem])
 
   const palette = useMemo(() => {
     const colorKey = resolveAssetColor((window as unknown as Record<string, unknown>).AssetCardColor)
@@ -288,17 +314,6 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
     window.addEventListener(ASSET_TRADE_OPEN_EVENT, openAssetTrade)
     return () => window.removeEventListener(ASSET_TRADE_OPEN_EVENT, openAssetTrade)
   }, [items])
-
-  useEffect(() => {
-    if (!tradeItem) return
-
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setTradeItem(null)
-    }
-
-    window.addEventListener("keydown", closeOnEscape)
-    return () => window.removeEventListener("keydown", closeOnEscape)
-  }, [tradeItem])
 
   const visibleItems = useMemo(() => {
     const filtered = excludeFree ? items.filter((item) => !item.isFree && !item.isUsageBased && !item.isFreeTagged) : items
@@ -406,6 +421,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
   return (
     <>
       <section
+        ref={summaryRef}
         className={cn(
           "glass-card asset-glass fixed right-5 top-[70px] z-[1040] flex w-[280px] max-w-[calc(100vw-40px)] flex-col rounded-2xl border border-white/15 text-white shadow-none backdrop-blur-xl transition max-[576px]:right-5 max-[576px]:w-[calc(100vw-40px)]",
           open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-4 opacity-0",

@@ -155,9 +155,9 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
               title={`${t(selectedMonitorIds === null ? "monitor.viewOnly" : isActive ? "monitor.deselect" : "monitor.addSelection")} ${monitor.monitor_name}`}
               onClick={() => toggleMonitor(monitor.monitor_id)}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-xs text-white/75">{monitor.monitor_name}</span>
-                <span className={cn("whitespace-nowrap text-[10px]", getPacketLossColor(averageLoss))}>
+              <div className="min-w-0">
+                <span className="block break-words text-xs leading-4 text-white/75">{monitor.monitor_name}</span>
+                <span className={cn("mt-1 block whitespace-nowrap text-[10px]", getPacketLossColor(averageLoss))}>
                   {t("monitor.packetLoss")} {averageLoss.toFixed(2)}%
                 </span>
               </div>
