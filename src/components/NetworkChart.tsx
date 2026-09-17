@@ -3,8 +3,8 @@
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { fetchMonitor } from "@/lib/nezha-api"
 import { cn, formatTime } from "@/lib/utils"
-import { NezhaMonitor } from "@/types/nezha-api"
-import { useQuery } from "@tanstack/react-query"
+import { MonitorResponse, NezhaMonitor } from "@/types/nezha-api"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
@@ -28,6 +28,73 @@ const CHART_COLORS = [
   "hsl(var(--chart-5))",
   "hsl(var(--chart-8))",
 ]
+
+const MONITOR_INCREMENTAL_WINDOW_MS = 3 * 60 * 1000
+const MONITOR_INCREMENTAL_MAX_POINTS = 60
+const HOUR_MS = 60 * 60 * 1000
+
+type MonitorPoint = {
+  createdAt: number
+  delay: number
+  packetLoss?: number
+  sampleCount?: number
+}
+
+function monitorKey(monitor: NezhaMonitor) {
+  return `${monitor.monitor_id}\u0000${monitor.monitor_name}`
+}
+
+function mergeMonitorResponses(
+  current: MonitorResponse | undefined,
+  incoming: MonitorResponse,
+  windowStart: number,
+  replaceFrom: number,
+): MonitorResponse {
+  if (!current?.success || !incoming.success) return incoming.success ? incoming : current || incoming
+
+  const currentByKey = new Map(current.data.map((monitor) => [monitorKey(monitor), monitor]))
+  const incomingByKey = new Map(incoming.data.map((monitor) => [monitorKey(monitor), monitor]))
+  const keys = new Set([...currentByKey.keys(), ...incomingByKey.keys()])
+  const data: NezhaMonitor[] = []
+
+  for (const key of keys) {
+    const existing = currentByKey.get(key)
+    const update = incomingByKey.get(key)
+    const base = update || existing
+    if (!base) continue
+
+    const points = new Map<number, MonitorPoint>()
+    const append = (monitor: NezhaMonitor, keep: (createdAt: number) => boolean) => {
+      monitor.created_at.forEach((createdAt, index) => {
+        if (!keep(createdAt)) return
+        points.set(createdAt, {
+          createdAt,
+          delay: monitor.avg_delay[index] ?? 0,
+          packetLoss: monitor.packet_loss?.[index],
+          sampleCount: monitor.sample_count?.[index],
+        })
+      })
+    }
+
+    if (existing) append(existing, (createdAt) => createdAt >= windowStart && (!update || createdAt < replaceFrom))
+    if (update) append(update, (createdAt) => createdAt >= windowStart)
+
+    const orderedPoints = [...points.values()].sort((a, b) => a.createdAt - b.createdAt)
+    const hasPacketLoss = Boolean(existing?.packet_loss || update?.packet_loss)
+    const hasSampleCount = Boolean(existing?.sample_count || update?.sample_count)
+
+    data.push({
+      ...base,
+      created_at: orderedPoints.map((point) => point.createdAt),
+      avg_delay: orderedPoints.map((point) => point.delay),
+      packet_loss: hasPacketLoss ? orderedPoints.map((point) => point.packetLoss ?? 0) : undefined,
+      sample_count: hasSampleCount ? orderedPoints.map((point) => point.sampleCount ?? 1) : undefined,
+    })
+  }
+
+  data.sort((a, b) => a.monitor_id - b.monitor_id || a.monitor_name.localeCompare(b.monitor_name))
+  return { success: true, data }
+}
 
 function combineMonitorData(monitors: NezhaMonitor[]): CombinedPoint[] {
   const points = new Map<number, CombinedPoint>()
@@ -77,13 +144,37 @@ function getPacketLossColor(packetLoss: number): string {
 
 export function NetworkChart({ server_id, show }: { server_id: number; show: boolean }) {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const [selectedMonitorIds, setSelectedMonitorIds] = useState<Set<number> | null>(null)
   const configuredHours = Number((window as unknown as Record<string, unknown>).ServerDetailMonitorHours)
   const monitorHours = Number.isFinite(configuredHours) && configuredHours >= 1 ? Math.min(720, Math.floor(configuredHours)) : 24
+  const fullQueryKey = ["monitor", server_id, monitorHours, "full"] as const
   const { data: monitorData } = useQuery({
-    queryKey: ["monitor", server_id, monitorHours],
+    queryKey: fullQueryKey,
     queryFn: () => fetchMonitor(server_id, monitorHours),
     enabled: show,
+    staleTime: Infinity,
+    gcTime: MONITOR_INCREMENTAL_WINDOW_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  })
+
+  useQuery({
+    queryKey: ["monitor", server_id, monitorHours, "incremental"],
+    queryFn: async () => {
+      const end = Date.now()
+      const start = end - MONITOR_INCREMENTAL_WINDOW_MS
+      const incoming = await fetchMonitor(server_id, monitorHours, {
+        start: new Date(start).toISOString(),
+        end: new Date(end).toISOString(),
+        maxPoints: MONITOR_INCREMENTAL_MAX_POINTS,
+      })
+      queryClient.setQueryData<MonitorResponse>(fullQueryKey, (current) =>
+        mergeMonitorResponses(current, incoming, end - monitorHours * HOUR_MS, start),
+      )
+      return end
+    },
+    enabled: show && Boolean(monitorData),
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchInterval: 10000,

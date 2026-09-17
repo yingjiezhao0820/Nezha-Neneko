@@ -12,6 +12,8 @@ import { CycleTransferStatsCard } from "./CycleTransferStats"
 import ServiceTrackerClient from "./ServiceTrackerClient"
 import { Loader } from "./loading/Loader"
 
+const SERVICE_CACHE_MS = 10 * 60 * 1000
+
 function getHiddenServices(): string[] {
   const val = (window as unknown as Record<string, unknown>).ServiceTrackerHidden
   if (Array.isArray(val)) return val as string[]
@@ -23,12 +25,13 @@ export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
   const [hiddenServices, setHiddenServices] = useState<string[]>(getHiddenServices)
 
   const { data: serviceData, isLoading } = useQuery({
-    queryKey: ["service"],
+    queryKey: ["services", "cycle-transfer", 720],
     queryFn: () => fetchService(),
     refetchOnMount: true,
     refetchOnWindowFocus: false,
-    refetchInterval: 600000, // 10分钟刷新一次，30天数据变化缓慢
-    staleTime: 300000, // 5分钟内不重复请求
+    refetchInterval: SERVICE_CACHE_MS,
+    staleTime: SERVICE_CACHE_MS,
+    gcTime: SERVICE_CACHE_MS * 2,
   })
 
   const { data: userData } = useQuery({
@@ -133,10 +136,7 @@ export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
                   <div className="space-y-2">
                     {allServices.map(([id, data]) => (
                       <label key={id} className="flex items-center gap-2 cursor-pointer text-sm">
-                        <Checkbox
-                          checked={!hiddenServices.includes(data.service_name)}
-                          onCheckedChange={() => toggleService(data.service_name)}
-                        />
+                        <Checkbox checked={!hiddenServices.includes(data.service_name)} onCheckedChange={() => toggleService(data.service_name)} />
                         {data.service_name}
                       </label>
                     ))}
@@ -149,7 +149,9 @@ export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
             <section className="grid grid-cols-1 md:grid-cols-2 mt-2 gap-2 md:gap-4">
               {visibleServices.map(([name, data]) => {
                 const { days, uptime, avgDelay, totalDays } = processServiceData(data)
-                return <ServiceTrackerClient key={name} days={days} title={data.service_name} uptime={uptime} avgDelay={avgDelay} totalDays={totalDays} />
+                return (
+                  <ServiceTrackerClient key={name} days={days} title={data.service_name} uptime={uptime} avgDelay={avgDelay} totalDays={totalDays} />
+                )
               })}
             </section>
           )}

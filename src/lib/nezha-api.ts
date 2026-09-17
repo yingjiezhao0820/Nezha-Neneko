@@ -17,6 +17,18 @@ import { getKomariNodes, uuidToNumber } from "./utils"
 const PING_LATENCY_METRIC = "ping.latency_ms"
 const PING_LOSS_METRIC = "ping.loss"
 
+export interface MonitorFetchOptions {
+  start?: string
+  end?: string
+  maxPoints?: number
+}
+
+export function getMonitorMaxPoints(hours: number) {
+  if (hours <= 24) return 288
+  if (hours <= 168) return 504
+  return 600
+}
+
 interface KomariMetricPoint {
   time?: string
   value?: number | null
@@ -374,7 +386,7 @@ export const fetchLoginUser = async (): Promise<LoginUserResponse> => {
   }
   return data
 }
-export const fetchMonitor = async (server_id: number, hours: number = 24): Promise<MonitorResponse> => {
+export const fetchMonitor = async (server_id: number, hours: number = 24, options: MonitorFetchOptions = {}): Promise<MonitorResponse> => {
   // 获取 uuid 和服务器名称
   const km_nodes: Record<string, any> = await getKomariNodes()
   if (km_nodes?.error) {
@@ -386,9 +398,12 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
   }
   const serverName = km_nodes[uuid]?.name || String(server_id)
 
+  const hasExplicitRange = Boolean(options.start && options.end)
+  const rangeParams = hasExplicitRange ? { start: options.start, end: options.end } : { hours }
+  const maxPoints = Math.max(1, Math.floor(options.maxPoints ?? getMonitorMaxPoints(hours)))
+
   try {
-    const maxPoints = hours <= 24 ? 2000 : hours <= 168 ? 3000 : 4000
-    const metricData = await fetchPingMetricSeries({ entity_id: uuid, hours }, maxPoints)
+    const metricData = await fetchPingMetricSeries({ entity_id: uuid, ...rangeParams }, maxPoints)
     return {
       success: true,
       data: monitorDataFromMetricSeries(metricData.series, metricData.tasks, server_id, serverName),
@@ -398,13 +413,16 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
     if (!isMetricApiUnavailable(error)) throw error
   }
 
-  // maxCount: -1 获取全量数据，确保丢包记录不会被后端采样丢弃
-  const km_monitors: any = await SharedClient().call("common:getRecords", {
-    type: "ping",
-    uuid: uuid,
-    maxCount: -1,
-    hours,
-  })
+  const km_monitors: any = await SharedClient().callViaHTTP(
+    "common:getRecords",
+    {
+      type: "ping",
+      uuid,
+      maxCount: maxPoints,
+      ...rangeParams,
+    },
+    { timeout: 30000 },
+  )
 
   // 将 km_monitors 转换为 NezhaMonitor[]
   const seriesByTask = new Map<number, NezhaMonitor>()
@@ -491,7 +509,7 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
     const timestamps = zip.map((z) => z.t)
 
     // 前端降采样：保留所有丢包点及邻近点，均匀抽稀正常点
-    const targetPoints = hours <= 24 ? 2000 : hours <= 168 ? 3000 : 4000
+    const targetPoints = maxPoints
     if (timestamps.length > targetPoints) {
       const keepSet = new Set<number>()
       keepSet.add(0)
@@ -551,12 +569,16 @@ export const fetchServerUptime = async (): Promise<ServiceResponse> => {
   const kmNodes: Record<string, any> = await getKomariNodes()
 
   // 一次查询所有服务器的 load 记录（按 UUID 分组），用于判断服务器在线状态
-  const result: any = await SharedClient().call("common:getRecords", {
-    type: "load",
-    load_type: "cpu",
-    hours: 720,
-    maxCount: -1,
-  })
+  const result: any = await SharedClient().callViaHTTP(
+    "common:getRecords",
+    {
+      type: "load",
+      load_type: "cpu",
+      hours: 720,
+      maxCount: Math.max(600, Object.keys(kmNodes).length * 600),
+    },
+    { timeout: 30000 },
+  )
 
   const records: Record<string, any[]> = result?.records || {}
   const now = Date.now()
@@ -637,7 +659,7 @@ export const fetchService = async (): Promise<ServiceResponse> => {
   }
 
   try {
-    const metricData = await fetchPingMetricSeries({ entity_ids: uuids, hours: 720 }, 720)
+    const metricData = await fetchPingMetricSeries({ entity_ids: uuids, hours: 720 }, 600)
     return {
       success: true,
       data: {
