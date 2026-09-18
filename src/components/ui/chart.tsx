@@ -99,6 +99,7 @@ const ChartTooltipContent = React.forwardRef<
       labelKey?: string
       contentClassName?: string
       itemsStyle?: React.CSSProperties
+      alwaysShowLabel?: boolean
     }
 >(
   (
@@ -108,6 +109,7 @@ const ChartTooltipContent = React.forwardRef<
       className,
       contentClassName,
       itemsStyle,
+      alwaysShowLabel = false,
       indicator = "dot",
       hideLabel = false,
       hideIndicator = false,
@@ -148,7 +150,7 @@ const ChartTooltipContent = React.forwardRef<
       return null
     }
 
-    const nestLabel = payload.length === 1 && indicator !== "dot"
+    const nestLabel = !alwaysShowLabel && payload.length === 1 && indicator !== "dot"
 
     return (
       <div

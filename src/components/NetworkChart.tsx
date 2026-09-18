@@ -16,6 +16,13 @@ type CombinedPoint = {
   [key: string]: number
 }
 
+type PacketLossDotProps = {
+  cx?: number
+  cy?: number
+  payload?: CombinedPoint
+  packetLossKey: string
+}
+
 const CHART_COLORS = [
   "hsl(var(--chart-3))",
   "hsl(var(--chart-1))",
@@ -29,18 +36,39 @@ const CHART_COLORS = [
   "hsl(var(--chart-8))",
 ]
 
+function packetLossDataKey(monitor: NezhaMonitor) {
+  return `__packet_loss_${monitor.monitor_id}`
+}
+
 function combineMonitorData(monitors: NezhaMonitor[]): CombinedPoint[] {
   const points = new Map<number, CombinedPoint>()
 
   for (const monitor of monitors) {
+    const lossKey = packetLossDataKey(monitor)
     monitor.created_at.forEach((createdAt, index) => {
       const point = points.get(createdAt) || { created_at: createdAt }
       point[monitor.monitor_name] = monitor.avg_delay[index] ?? 0
+      point[lossKey] = monitor.packet_loss?.[index] ?? 0
       points.set(createdAt, point)
     })
   }
 
   return [...points.values()].sort((a, b) => a.created_at - b.created_at)
+}
+
+function PacketLossDot({ cx, cy, payload, packetLossKey }: PacketLossDotProps) {
+  const packetLoss = Number(payload?.[packetLossKey] ?? 0)
+  if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(packetLoss) || packetLoss <= 0) return null
+
+  const color = packetLoss >= 10 ? "#f87171" : packetLoss >= 5 ? "#fb923c" : packetLoss >= 1 ? "#fcd34d" : "#fde68a"
+  const radius = packetLoss >= 10 ? 5.5 : packetLoss >= 5 ? 4.75 : packetLoss >= 1 ? 4 : 3.5
+
+  return (
+    <g aria-hidden="true" pointerEvents="none">
+      <circle cx={cx} cy={cy} r={radius + 2.5} fill={color} opacity={0.18} />
+      <circle cx={cx} cy={cy} r={radius} fill={color} stroke="rgba(15,23,42,0.9)" strokeWidth={1.25} />
+    </g>
+  )
 }
 
 function getLatestDelay(monitor: NezhaMonitor) {
@@ -100,6 +128,8 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
     return selected.length > 0 ? selected : monitors
   }, [monitors, selectedMonitorIds])
   const chartData = useMemo(() => combineMonitorData(visibleMonitors), [visibleMonitors])
+  const singleSelectedMonitor = selectedMonitorIds?.size === 1 && visibleMonitors.length === 1 ? visibleMonitors[0] : undefined
+  const singlePacketLossKey = singleSelectedMonitor ? packetLossDataKey(singleSelectedMonitor) : ""
   const chartConfig = useMemo(
     () =>
       visibleMonitors.reduce((config, monitor) => {
@@ -208,13 +238,28 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
                     columnGap: "1.25rem",
                   }}
                   indicator="line"
-                  labelFormatter={(_, payload) => (payload[0]?.payload?.created_at ? formatTime(payload[0].payload.created_at) : "")}
-                  formatter={(value, name) => (
-                    <div className="flex min-w-32 items-center justify-between gap-4 text-xs">
-                      <span className="text-muted-foreground">{String(name)}</span>
-                      <span className="font-medium tabular-nums">{Number(value).toFixed(2)}ms</span>
-                    </div>
-                  )}
+                  alwaysShowLabel
+                  labelFormatter={(label, payload) => {
+                    const timestamp = Number(payload[0]?.payload?.created_at ?? label)
+                    return Number.isFinite(timestamp) ? formatTime(timestamp) : ""
+                  }}
+                  formatter={(value, name, item) => {
+                    const packetLoss = singlePacketLossKey ? Number(item.payload?.[singlePacketLossKey]) : null
+                    return (
+                      <div className="grid min-w-32 gap-1.5 text-xs">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-muted-foreground">{String(name)}</span>
+                          <span className="font-medium tabular-nums">{Number(value).toFixed(2)}ms</span>
+                        </div>
+                        {packetLoss !== null && Number.isFinite(packetLoss) && (
+                          <div className="flex items-center justify-between gap-4 border-t border-border/50 pt-1.5">
+                            <span className="text-muted-foreground">{t("monitor.packetLoss")}</span>
+                            <span className={cn("font-semibold tabular-nums", getPacketLossColor(packetLoss))}>{packetLoss.toFixed(2)}%</span>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }}
                 />
               }
             />
@@ -227,7 +272,11 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
                 type="linear"
                 stroke={monitorColors.get(monitor.monitor_id) || CHART_COLORS[0]}
                 strokeWidth={1.25}
-                dot={false}
+                dot={
+                  singleSelectedMonitor?.monitor_id === monitor.monitor_id
+                    ? (props) => <PacketLossDot {...props} packetLossKey={singlePacketLossKey} />
+                    : false
+                }
                 connectNulls={true}
                 isAnimationActive={false}
               />
