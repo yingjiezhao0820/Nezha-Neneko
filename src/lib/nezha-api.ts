@@ -151,6 +151,7 @@ function monitorDataFromMetricSeries(
   serverName: string,
 ): NezhaMonitor[] {
   const taskNames = new Map(tasks.map((task) => [String(task.id), task.name || `task_${task.id}`]))
+  const taskOrder = new Map(tasks.map((task, index) => [String(task.id), index]))
   const lossLookup = buildPingLossLookup(seriesList)
   const monitors: NezhaMonitor[] = []
 
@@ -190,7 +191,11 @@ function monitorDataFromMetricSeries(
     if (monitor.created_at.length > 0) monitors.push(monitor)
   }
 
-  return monitors.sort((a, b) => a.monitor_id - b.monitor_id || a.monitor_name.localeCompare(b.monitor_name))
+  return monitors.sort((a, b) => {
+    const orderA = taskOrder.get(String(a.monitor_id)) ?? Number.MAX_SAFE_INTEGER
+    const orderB = taskOrder.get(String(b.monitor_id)) ?? Number.MAX_SAFE_INTEGER
+    return orderA - orderB || a.monitor_name.localeCompare(b.monitor_name)
+  })
 }
 
 function serviceDataFromMetricSeries(seriesList: KomariMetricSeries[], tasks: KomariPingTask[], entityIds: string[]): Record<string, ServiceData> {
