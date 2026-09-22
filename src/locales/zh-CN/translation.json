@@ -126,6 +126,16 @@
     "deselect": "取消选择",
     "addSelection": "增加"
   },
+  "networkTraffic": {
+    "title": "近 24 小时网络流量",
+    "subtitle": "5 分钟粒度 · 时间按本地时区显示",
+    "download": "下载",
+    "upload": "上传",
+    "downloadPeak": "下载峰值",
+    "uploadPeak": "上传峰值",
+    "noData": "暂无网络流量数据",
+    "loadError": "网络流量数据加载失败"
+  },
   "trafficBar": {
     "reset": "流量重置",
     "billing": "计费",

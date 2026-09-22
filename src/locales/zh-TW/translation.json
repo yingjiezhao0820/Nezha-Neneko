@@ -128,6 +128,16 @@
     "deselect": "取消選擇",
     "addSelection": "增加"
   },
+  "networkTraffic": {
+    "title": "近 24 小時網路流量",
+    "subtitle": "5 分鐘粒度 · 時間按本地時區顯示",
+    "download": "下載",
+    "upload": "上傳",
+    "downloadPeak": "下載峰值",
+    "uploadPeak": "上傳峰值",
+    "noData": "暫無網路流量資料",
+    "loadError": "網路流量資料載入失敗"
+  },
   "billingInfo": {
     "remaining": "剩餘天數",
     "error": "獲取失敗",

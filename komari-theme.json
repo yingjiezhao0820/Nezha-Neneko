@@ -206,6 +206,13 @@
         "help": "设置服务器详情页检测图表查询的时间范围，单位为小时；默认显示最近 24 小时。"
       },
       {
+        "key": "ShowServerDetailNetworkTrafficChart",
+        "name": "显示 24 小时网络流量图表",
+        "type": "switch",
+        "default": true,
+        "help": "开启后在详情检测图表下方显示最近 24 小时的上传、下载速度曲线及峰值；默认开启。"
+      },
+      {
         "name": "卡片显示设置",
         "type": "title"
       },

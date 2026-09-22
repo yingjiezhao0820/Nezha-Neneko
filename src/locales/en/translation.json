@@ -125,6 +125,16 @@
     "deselect": "Deselect",
     "addSelection": "Add"
   },
+  "networkTraffic": {
+    "title": "Network traffic over the last 24 hours",
+    "subtitle": "5-minute samples · Times shown in your local time zone",
+    "download": "Download",
+    "upload": "Upload",
+    "downloadPeak": "Download peak",
+    "uploadPeak": "Upload peak",
+    "noData": "No network traffic data available",
+    "loadError": "Failed to load network traffic data"
+  },
   "trafficBar": {
     "reset": "Reset",
     "billing": "Billing",
