@@ -14,7 +14,7 @@ import {
   resolveThemeBillingCurrency,
 } from "@/lib/utils"
 import { NezhaServer } from "@/types/nezha-api"
-import { Check, CircleDollarSign, Copy, Heart, HelpCircle, RefreshCw, X } from "lucide-react"
+import { Calculator, CalendarDays, Check, CircleDollarSign, Copy, HelpCircle, RefreshCw, Trash2, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 type AssetSummaryWidgetProps = {
@@ -29,6 +29,16 @@ type BillingData = NonNullable<NonNullable<ReturnType<typeof parsePublicNote>>["
 type FormattedServer = ReturnType<typeof formatNezhaInfo>
 type ExchangeRates = Record<string, number>
 type AssetSort = "weight_asc" | "weight_desc" | "price_asc" | "price_desc"
+type FinanceTab = "fixed" | "metered" | "rates"
+type TrafficMode = "sum" | "max" | "up" | "down"
+type MeteredSettings = {
+  trafficMode: TrafficMode
+  currency: string
+  trafficRate: number
+  timeRate: number
+  manualHours: number
+  oneTimeFee: number
+}
 
 type AssetItem = {
   id: number
@@ -66,6 +76,63 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   EUR: "€",
   GBP: "£",
   JPY: "¥",
+}
+const TRAFFIC_MODE_LABELS: Record<TrafficMode, string> = {
+  sum: "上行 + 下行",
+  max: "取较大值",
+  up: "仅上行",
+  down: "仅下行",
+}
+const TIB_BYTES = 1024 ** 4
+const MAX_METERED_INPUT = 1_000_000_000
+const RATE_OVERRIDES_KEY = "asset_card_rate_overrides"
+
+function getStoredRateOverrides(): ExchangeRates {
+  try {
+    const stored = JSON.parse(localStorage.getItem(RATE_OVERRIDES_KEY) || "{}") as ExchangeRates
+    return Object.fromEntries(Object.entries(stored).filter(([, value]) => Number.isFinite(value) && value > 0))
+  } catch {
+    return {}
+  }
+}
+
+function getMeteredStorageKey(serverId: number) {
+  return `asset_metered_estimate:${serverId}`
+}
+
+function getDefaultMeteredSettings(currency: string): MeteredSettings {
+  return {
+    trafficMode: "sum",
+    currency,
+    trafficRate: 0,
+    timeRate: 0,
+    manualHours: 0,
+    oneTimeFee: 0,
+  }
+}
+
+function getStoredMeteredSettings(serverId: number, currency: string): MeteredSettings {
+  try {
+    const stored = JSON.parse(localStorage.getItem(getMeteredStorageKey(serverId)) || "{}") as Partial<MeteredSettings>
+    return {
+      trafficMode: stored.trafficMode && stored.trafficMode in TRAFFIC_MODE_LABELS ? stored.trafficMode : "sum",
+      currency: DISPLAY_CURRENCIES.includes(stored.currency as (typeof DISPLAY_CURRENCIES)[number]) ? stored.currency! : currency,
+      trafficRate: Number.isFinite(stored.trafficRate) ? Math.max(0, Number(stored.trafficRate)) : 0,
+      timeRate: Number.isFinite(stored.timeRate) ? Math.max(0, Number(stored.timeRate)) : 0,
+      manualHours: Number.isFinite(stored.manualHours) ? Math.max(0, Number(stored.manualHours)) : 0,
+      oneTimeFee: Number.isFinite(stored.oneTimeFee) ? Math.max(0, Number(stored.oneTimeFee)) : 0,
+    }
+  } catch {
+    return getDefaultMeteredSettings(currency)
+  }
+}
+
+function formatEstimateTraffic(tib: number) {
+  return tib < 0.001 ? `${(tib * 1024).toFixed(2)} GiB` : `${tib.toFixed(3)} TiB`
+}
+
+function formatEstimateHours(hours: number) {
+  return hours < 24 ? `${hours.toFixed(1)} h` : `${(hours / 24).toFixed(1)} d`
 }
 
 function getInitialCurrency(): string {
@@ -211,7 +278,7 @@ function useExchangeRates(refreshKey: number) {
           }
           const data = (await res.json()) as { rates?: ExchangeRates }
           if (data.rates && !cancelled) {
-            setRates({ ...DEFAULT_EXCHANGE_RATES, ...data.rates, CNY: 1 })
+            setRates({ ...DEFAULT_EXCHANGE_RATES, ...data.rates, ...getStoredRateOverrides(), CNY: 1 })
             setStatus(`汇率更新: ${new Date().toLocaleTimeString()}`)
             return
           }
@@ -221,7 +288,7 @@ function useExchangeRates(refreshKey: number) {
       }
 
       if (!cancelled) {
-        setRates(DEFAULT_EXCHANGE_RATES)
+        setRates({ ...DEFAULT_EXCHANGE_RATES, ...getStoredRateOverrides(), CNY: 1 })
         setStatus("使用默认汇率")
       }
     }
@@ -235,16 +302,7 @@ function useExchangeRates(refreshKey: number) {
     }
   }, [refreshKey])
 
-  return { rates, status }
-}
-
-function FinanceRow({ label, value, accentClass }: { label: string; value: string; accentClass: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 text-[13px]">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={cn("font-bold", accentClass)}>{value}</span>
-    </div>
-  )
+  return { rates, status, setRates }
 }
 
 export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetProps) {
@@ -254,14 +312,21 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
   const [targetCurrency, setTargetCurrency] = useState(getInitialCurrency)
   const [sortBy, setSortBy] = useState<AssetSort>((localStorage.getItem("asset_card_sort") as AssetSort) || "weight_asc")
   const [excludeFree, setExcludeFree] = useState(localStorage.getItem("asset_card_exclude_free") !== "false")
+  const [financeTab, setFinanceTab] = useState<FinanceTab>("fixed")
+  const [snapshotAt, setSnapshotAt] = useState(Date.now())
+  const [selectedMeteredId, setSelectedMeteredId] = useState<number | null>(null)
+  const [meteredSettings, setMeteredSettings] = useState<MeteredSettings>(() => getDefaultMeteredSettings(getInitialCurrency()))
   const [tradeItem, setTradeItem] = useState<AssetItem | null>(null)
   const [tradeAmount, setTradeAmount] = useState("")
   const [tradeDate, setTradeDate] = useState(new Date().toISOString().slice(0, 10))
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle")
-  const { rates, status } = useExchangeRates(refreshKey)
+  const { rates, status, setRates } = useExchangeRates(refreshKey)
 
   useEffect(() => {
-    const openAssetSummary = () => setOpen(true)
+    const openAssetSummary = () => {
+      setSnapshotAt(Date.now())
+      setOpen(true)
+    }
     window.addEventListener(ASSET_SUMMARY_OPEN_EVENT, openAssetSummary)
     return () => window.removeEventListener(ASSET_SUMMARY_OPEN_EVENT, openAssetSummary)
   }, [])
@@ -333,6 +398,42 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
     )
   }, [visibleItems])
 
+  useEffect(() => {
+    if (!open) return
+    const selected = visibleItems.find((item) => item.id === selectedMeteredId) || visibleItems[0]
+    if (!selected) {
+      setSelectedMeteredId(null)
+      return
+    }
+    if (selected.id !== selectedMeteredId) {
+      setSelectedMeteredId(selected.id)
+      setMeteredSettings(getStoredMeteredSettings(selected.id, targetCurrency))
+    }
+  }, [open, selectedMeteredId, targetCurrency, visibleItems])
+
+  const selectedMeteredItem = visibleItems.find((item) => item.id === selectedMeteredId) || null
+  const meteredEstimate = useMemo(() => {
+    if (!selectedMeteredItem?.formatted.online) return null
+
+    const up = Math.max(0, Number(selectedMeteredItem.formatted.net_out_transfer) || 0)
+    const down = Math.max(0, Number(selectedMeteredItem.formatted.net_in_transfer) || 0)
+    const trafficBytes =
+      meteredSettings.trafficMode === "up"
+        ? up
+        : meteredSettings.trafficMode === "down"
+          ? down
+          : meteredSettings.trafficMode === "max"
+            ? Math.max(up, down)
+            : up + down
+    const trafficTiB = trafficBytes / TIB_BYTES
+    const trafficCost = trafficTiB * meteredSettings.trafficRate
+    const timeCost = meteredSettings.manualHours * meteredSettings.timeRate
+    const totalCost = trafficCost + timeCost + meteredSettings.oneTimeFee
+    const totalCny = amountToCny(totalCost, meteredSettings.currency, rates)
+
+    return { trafficTiB, trafficCost, timeCost, totalCost, totalCny }
+  }, [meteredSettings, rates, selectedMeteredItem])
+
   const targetRate = rates[targetCurrency] || 1
   const exchangeRows = DISPLAY_CURRENCIES.filter((currency) => currency !== targetCurrency && rates[currency]).map((currency) => ({
     currency,
@@ -371,6 +472,50 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
     const nextValue = !excludeFree
     setExcludeFree(nextValue)
     localStorage.setItem("asset_card_exclude_free", String(nextValue))
+  }
+
+  const persistMeteredSettings = (next: MeteredSettings) => {
+    setMeteredSettings(next)
+    if (selectedMeteredId !== null) localStorage.setItem(getMeteredStorageKey(selectedMeteredId), JSON.stringify(next))
+  }
+
+  const updateMeteredNumber = (key: "trafficRate" | "timeRate" | "manualHours" | "oneTimeFee", rawValue: string) => {
+    const value = rawValue.trim() === "" ? 0 : Number(rawValue)
+    if (!Number.isFinite(value) || value < 0 || value > MAX_METERED_INPUT) return
+    persistMeteredSettings({ ...meteredSettings, [key]: value })
+  }
+
+  const selectMeteredItem = (serverId: number) => {
+    setSelectedMeteredId(serverId)
+    setMeteredSettings(getStoredMeteredSettings(serverId, targetCurrency))
+  }
+
+  const clearMeteredSettings = () => {
+    if (selectedMeteredId === null) return
+    localStorage.removeItem(getMeteredStorageKey(selectedMeteredId))
+    setMeteredSettings(getDefaultMeteredSettings(targetCurrency))
+  }
+
+  const updateExchangeRate = (currency: string, rawValue: string) => {
+    if (currency === "CNY") return
+    const value = Number(rawValue)
+    if (!Number.isFinite(value) || value <= 0 || value > MAX_METERED_INPUT) return
+
+    const overrides = { ...getStoredRateOverrides(), [currency]: value }
+    localStorage.setItem(RATE_OVERRIDES_KEY, JSON.stringify(overrides))
+    setRates((current) => ({ ...current, [currency]: value, CNY: 1 }))
+  }
+
+  const resetExchangeRates = () => {
+    localStorage.removeItem(RATE_OVERRIDES_KEY)
+    setRefreshKey((value) => value + 1)
+  }
+
+  const openTradeCalculator = (item: AssetItem) => {
+    setTradeDate(new Date().toISOString().slice(0, 10))
+    setTradeAmount("")
+    setCopyStatus("idle")
+    setTradeItem(item)
   }
 
   const handleCopyTrade = async () => {
@@ -420,145 +565,412 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
 
   return (
     <>
-      <section
-        ref={summaryRef}
-        className={cn(
-          "glass-card asset-glass fixed right-5 top-[70px] z-[1040] flex w-[280px] max-w-[calc(100vw-40px)] flex-col rounded-2xl border border-white/15 text-white shadow-none backdrop-blur-xl transition max-[576px]:right-5 max-[576px]:w-[calc(100vw-40px)]",
-          open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-4 opacity-0",
-        )}
-      >
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <h3 className={cn("flex items-center gap-2 text-sm font-bold", palette.panelTitle)}>
-            <CircleDollarSign className="size-4" />
-            资产统计
-          </h3>
-          <button
-            type="button"
-            aria-label="关闭资产统计"
-            className={cn("rounded-full p-1 text-muted-foreground transition", palette.hoverPrimary)}
-            onClick={() => setOpen(false)}
+      {open && (
+        <div className="fixed inset-0 z-[1040] flex items-center justify-center bg-black/25 px-3 py-4 backdrop-blur-sm sm:px-5">
+          <section
+            ref={summaryRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="价值与费用明细"
+            className="glass-card asset-glass flex max-h-[94vh] w-full max-w-[920px] flex-col overflow-hidden rounded-2xl border border-white/15 text-white shadow-2xl backdrop-blur-xl"
           >
-            <X className="size-4" />
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-2 px-4 py-3">
-          <FinanceRow label="服务器数量" value={`${servers.length}`} accentClass={palette.primaryText} />
-          <FinanceRow label="总价值" value={formatMoney(totals.total * targetRate, targetCurrency)} accentClass={palette.primaryText} />
-          <FinanceRow label="月均支出" value={formatMoney(totals.monthly * targetRate, targetCurrency)} accentClass={palette.primaryText} />
-          <FinanceRow label="年均支出" value={formatMoney(totals.monthly * 12 * targetRate, targetCurrency)} accentClass={palette.primaryText} />
-          <FinanceRow label="剩余总价值" value={formatMoney(totals.remaining * targetRate, targetCurrency)} accentClass={palette.primaryText} />
-          {totals.unresolved > 0 && (
-            <div className="flex items-start gap-1 rounded-md bg-amber-500/10 px-2 py-1 text-[11px] text-amber-700 dark:text-amber-300">
-              <HelpCircle className="mt-0.5 size-3 shrink-0" />
-              <span>{totals.unresolved} 台服务器的币种未配置或无法换算，未计入汇总。</span>
-            </div>
-          )}
-
-          <div className="my-1 h-px bg-border" />
-
-          <div className="max-h-[230px] overflow-y-auto pr-1">
-            {visibleItems.length > 0 ? (
-              visibleItems.map((item) => {
-                const convertedValue = cnyToCurrency(item.remainingCny ?? item.priceCny, targetCurrency, rates)
-                const title = item.isLongTerm
-                  ? "长期机器按原价计入剩余价值"
-                  : item.isExpired
-                    ? "已过期"
-                    : item.remainingDays !== null
-                      ? `剩余 ${item.remainingDays} 天`
-                      : item.sourcePriceText
-
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="flex w-full items-center justify-between gap-3 rounded-md px-1 py-1.5 text-left text-[13px] transition hover:bg-accent"
-                    onClick={() => {
-                      setTradeDate(new Date().toISOString().slice(0, 10))
-                      setTradeAmount("")
-                      setCopyStatus("idle")
-                      setTradeItem(item)
-                    }}
-                  >
-                    <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" title={item.name}>
-                      {item.name}
-                    </span>
-                    <span
-                      className={cn("flex shrink-0 items-center gap-1 font-semibold", palette.primaryText)}
-                      title={`${item.sourcePriceText} · ${title}`}
-                    >
-                      {formatMoney(convertedValue, targetCurrency)}
-                      {(item.isFree || item.isUsageBased || item.isFreeTagged || item.isLongTerm || item.isExpired) && (
-                        <HelpCircle className="size-3 text-muted-foreground" />
-                      )}
-                    </span>
-                  </button>
-                )
-              })
-            ) : (
-              <p className="py-4 text-center text-xs text-muted-foreground">没有可显示的资产项目</p>
-            )}
-          </div>
-
-          <p className="text-right text-[11px] text-muted-foreground">{status}</p>
-
-          <div className="max-h-[120px] overflow-y-auto rounded-md bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground">
-            {exchangeRows.map((row) => (
-              <div key={row.currency} className="flex justify-between gap-3">
-                <span>1 {row.currency}</span>
-                <span className={cn("font-medium", palette.primaryText)}>{formatMoney(row.value, targetCurrency)}</span>
+            <div className="flex items-start justify-between gap-4 border-b border-border px-4 py-3.5 sm:px-5">
+              <div>
+                <h3 className={cn("flex items-center gap-2 text-base font-bold", palette.panelTitle)}>
+                  <CircleDollarSign className="size-4" />
+                  价值与费用明细
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">固定账单、纯前端按量估算与汇率设置</p>
               </div>
-            ))}
-          </div>
+              <button
+                type="button"
+                aria-label="关闭价值与费用明细"
+                className={cn("rounded-full p-1.5 text-muted-foreground transition", palette.hoverPrimary)}
+                onClick={() => setOpen(false)}
+              >
+                <X className="size-4" />
+              </button>
+            </div>
 
-          <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
-            <div className="flex gap-2">
-              <select
-                className="h-7 rounded border border-border bg-card px-1.5 text-[11px] outline-none"
-                value={targetCurrency}
-                onChange={(event) => persistCurrency(event.target.value)}
-              >
-                {DISPLAY_CURRENCIES.map((currency) => (
-                  <option key={currency} value={currency}>
-                    {currency} ({CURRENCY_SYMBOLS[currency]})
-                  </option>
-                ))}
-              </select>
-              <select
-                className="h-7 rounded border border-border bg-card px-1.5 text-[11px] outline-none"
-                value={sortBy}
-                onChange={(event) => persistSort(event.target.value as AssetSort)}
-              >
-                <option value="weight_asc">权重 正序</option>
-                <option value="weight_desc">权重 倒序</option>
-                <option value="price_asc">价格 正序</option>
-                <option value="price_desc">价格 倒序</option>
-              </select>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 scrollbar-hidden sm:p-5">
+              <div className="grid grid-cols-3 divide-x divide-border/60 border-y border-border/60 py-3 text-center">
+                <div className="min-w-0 px-2">
+                  <p className="text-[11px] text-muted-foreground sm:text-xs">剩余价值</p>
+                  <p className={cn("mt-1 truncate text-base font-semibold tabular-nums sm:text-lg", palette.primaryText)}>
+                    {formatMoney(totals.remaining * targetRate, targetCurrency)}
+                  </p>
+                </div>
+                <div className="min-w-0 px-2">
+                  <p className="text-[11px] text-muted-foreground sm:text-xs">固定月均支出</p>
+                  <p className={cn("mt-1 truncate text-base font-semibold tabular-nums sm:text-lg", palette.primaryText)}>
+                    {formatMoney(totals.monthly * targetRate, targetCurrency)}
+                  </p>
+                </div>
+                <div className="min-w-0 px-2">
+                  <p className="text-[11px] text-muted-foreground sm:text-xs">当前节点估算</p>
+                  <p className={cn("mt-1 truncate text-base font-semibold tabular-nums sm:text-lg", palette.primaryText)}>
+                    {formatMoney(cnyToCurrency(meteredEstimate?.totalCny ?? null, targetCurrency, rates), targetCurrency)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <div className="flex min-w-0 rounded-lg border border-border bg-muted/30 p-1">
+                  {(
+                    [
+                      ["fixed", "固定账单", CalendarDays],
+                      ["metered", "按量估算", Calculator],
+                      ["rates", "汇率设置", CircleDollarSign],
+                    ] as const
+                  ).map(([tab, label, Icon]) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      className={cn(
+                        "flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition sm:px-3",
+                        financeTab === tab ? "bg-white/15 text-white shadow-sm" : "text-muted-foreground hover:bg-white/[0.08] hover:text-white",
+                      )}
+                      onClick={() => setFinanceTab(tab)}
+                    >
+                      <Icon className="size-3.5" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                  <input type="checkbox" className="size-4 accent-current" checked={excludeFree} onChange={toggleFree} />
+                  排除免费节点
+                </label>
+              </div>
+
+              {financeTab === "fixed" && (
+                <div className="mt-4 space-y-3">
+                  <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-semibold">固定账单明细</h4>
+                      <p className="mt-0.5 text-xs text-muted-foreground">沿用 Komari 节点价格、周期及到期时间。</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <select
+                        aria-label="显示币种"
+                        className="h-8 rounded-md border border-border bg-background px-2 text-xs outline-none"
+                        value={targetCurrency}
+                        onChange={(event) => persistCurrency(event.target.value)}
+                      >
+                        {DISPLAY_CURRENCIES.map((currency) => (
+                          <option key={currency} value={currency}>
+                            {currency} ({CURRENCY_SYMBOLS[currency]})
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="资产排序"
+                        className="h-8 rounded-md border border-border bg-background px-2 text-xs outline-none"
+                        value={sortBy}
+                        onChange={(event) => persistSort(event.target.value as AssetSort)}
+                      >
+                        <option value="weight_asc">权重正序</option>
+                        <option value="weight_desc">权重倒序</option>
+                        <option value="price_asc">价格正序</option>
+                        <option value="price_desc">价格倒序</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {totals.unresolved > 0 && (
+                    <div className="flex items-start gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                      <HelpCircle className="mt-0.5 size-3.5 shrink-0" />
+                      <span>{totals.unresolved} 台服务器的币种未配置或无法换算，未计入汇总。</span>
+                    </div>
+                  )}
+
+                  <div className="overflow-x-auto rounded-lg border border-border/70">
+                    <table className="w-full min-w-[720px] text-left text-xs">
+                      <thead className="bg-muted/45 text-muted-foreground">
+                        <tr>
+                          <th className="px-3 py-2.5 font-medium">节点</th>
+                          <th className="px-3 py-2.5 font-medium">固定费用</th>
+                          <th className="px-3 py-2.5 font-medium">到期</th>
+                          <th className="px-3 py-2.5 font-medium">剩余价值</th>
+                          <th className="px-3 py-2.5 text-right font-medium">月均支出</th>
+                          <th className="px-3 py-2.5 text-right font-medium">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/60">
+                        {visibleItems.map((item) => {
+                          const expiryLabel = item.isLongTerm
+                            ? "长期"
+                            : item.isExpired
+                              ? "已过期"
+                              : item.remainingDays === null
+                                ? "未设置"
+                                : item.remainingDays === 0
+                                  ? "今天"
+                                  : `${item.remainingDays} 天`
+                          return (
+                            <tr key={item.id} className="transition hover:bg-white/[0.05]">
+                              <td className="max-w-52 px-3 py-2.5">
+                                <p className="truncate font-medium" title={item.name}>
+                                  {item.name}
+                                </p>
+                              </td>
+                              <td className="whitespace-nowrap px-3 py-2.5">{item.sourcePriceText}</td>
+                              <td className="whitespace-nowrap px-3 py-2.5">{expiryLabel}</td>
+                              <td className={cn("whitespace-nowrap px-3 py-2.5 font-semibold tabular-nums", palette.primaryText)}>
+                                {item.isFree ? "无" : formatMoney(cnyToCurrency(item.remainingCny, targetCurrency, rates), targetCurrency)}
+                              </td>
+                              <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums">
+                                {formatMoney(cnyToCurrency(item.monthlyCny, targetCurrency, rates), targetCurrency)}
+                              </td>
+                              <td className="px-3 py-2.5 text-right">
+                                <button
+                                  type="button"
+                                  className={cn("rounded-md border border-border px-2 py-1 text-[11px] transition", palette.hoverPrimary)}
+                                  onClick={() => openTradeCalculator(item)}
+                                >
+                                  交易计算
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                        {visibleItems.length === 0 && (
+                          <tr>
+                            <td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">
+                              暂无账单节点
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                    <span>
+                      共 {visibleItems.length} 台 · 总价值 {formatMoney(totals.total * targetRate, targetCurrency)} · 年均支出{" "}
+                      {formatMoney(totals.monthly * 12 * targetRate, targetCurrency)}
+                    </span>
+                    <span>{status}</span>
+                  </div>
+                </div>
+              )}
+
+              {financeTab === "metered" && (
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-lg border border-sky-400/20 bg-sky-400/[0.08] px-3 py-2 text-xs text-muted-foreground">
+                    按量费用仅在当前浏览器估算，不写入 Komari。累计流量可能因机器或 Agent 重启而重置；1 TiB = 1024⁴ bytes，结果不代表正式账单。
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <label className="grid gap-1 text-xs">
+                      <span className="font-medium">估算节点</span>
+                      <select
+                        aria-label="估算节点"
+                        className="h-9 min-w-0 rounded-md border border-border bg-background px-2 outline-none"
+                        value={selectedMeteredId ?? ""}
+                        onChange={(event) => selectMeteredItem(Number(event.target.value))}
+                      >
+                        {visibleItems.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs">
+                      <span className="font-medium">流量口径</span>
+                      <select
+                        className="h-9 rounded-md border border-border bg-background px-2 outline-none"
+                        value={meteredSettings.trafficMode}
+                        onChange={(event) => persistMeteredSettings({ ...meteredSettings, trafficMode: event.target.value as TrafficMode })}
+                      >
+                        {Object.entries(TRAFFIC_MODE_LABELS).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs">
+                      <span className="font-medium">计价币种</span>
+                      <select
+                        className="h-9 rounded-md border border-border bg-background px-2 outline-none"
+                        value={meteredSettings.currency}
+                        onChange={(event) => persistMeteredSettings({ ...meteredSettings, currency: event.target.value })}
+                      >
+                        {DISPLAY_CURRENCIES.map((currency) => (
+                          <option key={currency} value={currency}>
+                            {currency}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs">
+                      <span className="font-medium">显示币种</span>
+                      <select
+                        className="h-9 rounded-md border border-border bg-background px-2 outline-none"
+                        value={targetCurrency}
+                        onChange={(event) => persistCurrency(event.target.value)}
+                      >
+                        {DISPLAY_CURRENCIES.map((currency) => (
+                          <option key={currency} value={currency}>
+                            {currency}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    {(
+                      [
+                        ["trafficRate", "流量单价 / TiB"],
+                        ["timeRate", "小时单价 / h"],
+                        ["manualHours", "手工计费小时"],
+                        ["oneTimeFee", "本次附加费用"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label key={key} className="grid gap-1 text-xs">
+                        <span className="font-medium">{label}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max={MAX_METERED_INPUT}
+                          step="any"
+                          className={cn(
+                            "h-9 min-w-0 rounded-md border border-border bg-background px-2.5 tabular-nums outline-none focus:ring-2",
+                            palette.focusInput,
+                          )}
+                          value={meteredSettings[key]}
+                          onChange={(event) => updateMeteredNumber(key, event.target.value)}
+                        />
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span>快照：{new Date(snapshotAt).toLocaleString()}</span>
+                    <button
+                      type="button"
+                      className={cn("ml-auto rounded-md border border-border px-2.5 py-1.5 transition", palette.hoverPrimary)}
+                      disabled={!selectedMeteredItem}
+                      onClick={() =>
+                        selectedMeteredItem &&
+                        persistMeteredSettings({ ...meteredSettings, manualHours: selectedMeteredItem.formatted.uptime / 3600 })
+                      }
+                    >
+                      带入当前 uptime
+                    </button>
+                    <button
+                      type="button"
+                      className={cn("flex items-center gap-1 rounded-md px-2.5 py-1.5 transition", palette.hoverPrimary)}
+                      onClick={clearMeteredSettings}
+                    >
+                      <Trash2 className="size-3.5" />
+                      清除本地配置
+                    </button>
+                  </div>
+
+                  {!selectedMeteredItem?.formatted.online || !meteredEstimate ? (
+                    <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.08] px-3 py-6 text-center text-sm text-amber-200">
+                      当前节点离线或没有可用的实时累计流量，无法进行本次估算。
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 divide-x divide-y divide-border/60 overflow-hidden rounded-lg border border-border/70 md:grid-cols-4 md:divide-y-0">
+                      <div className="p-3">
+                        <p className="text-xs text-muted-foreground">计费流量</p>
+                        <p className="mt-1 font-semibold tabular-nums">{formatEstimateTraffic(meteredEstimate.trafficTiB)}</p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">{TRAFFIC_MODE_LABELS[meteredSettings.trafficMode]}</p>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-muted-foreground">流量费用</p>
+                        <p className="mt-1 font-semibold tabular-nums">{formatMoney(meteredEstimate.trafficCost, meteredSettings.currency)}</p>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-muted-foreground">时间 / 附加</p>
+                        <p className="mt-1 font-semibold tabular-nums">
+                          {formatMoney(meteredEstimate.timeCost, meteredSettings.currency)} /{" "}
+                          {formatMoney(meteredSettings.oneTimeFee, meteredSettings.currency)}
+                        </p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">手工 {formatEstimateHours(meteredSettings.manualHours)}</p>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs text-muted-foreground">显示金额</p>
+                        <p className={cn("mt-1 text-lg font-semibold tabular-nums", palette.primaryText)}>
+                          {formatMoney(cnyToCurrency(meteredEstimate.totalCny, targetCurrency, rates), targetCurrency)}
+                        </p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          源币种小计 {formatMoney(meteredEstimate.totalCost, meteredSettings.currency)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {financeTab === "rates" && (
+                <div className="mt-4 space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="mr-auto">
+                      <h4 className="text-sm font-semibold">汇率</h4>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{status} · 1 CNY 对应数值；修改后保存在当前浏览器。</p>
+                    </div>
+                    <select
+                      aria-label="汇率显示币种"
+                      className="h-8 rounded-md border border-border bg-background px-2 text-xs outline-none"
+                      value={targetCurrency}
+                      onChange={(event) => persistCurrency(event.target.value)}
+                    >
+                      {DISPLAY_CURRENCIES.map((currency) => (
+                        <option key={currency} value={currency}>
+                          {currency}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className={cn("flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs transition", palette.hoverPrimary)}
+                      onClick={resetExchangeRates}
+                    >
+                      <RefreshCw className="size-3.5" />
+                      恢复今日汇率
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {DISPLAY_CURRENCIES.map((currency) => (
+                      <label key={currency} className="grid grid-cols-[3rem_1fr] items-center gap-2 text-xs">
+                        <span className="font-medium">{currency}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          disabled={currency === "CNY"}
+                          className={cn(
+                            "h-9 min-w-0 rounded-md border border-border bg-background px-2.5 tabular-nums outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50",
+                            palette.focusInput,
+                          )}
+                          value={rates[currency] ?? ""}
+                          onChange={(event) => updateExchangeRate(currency, event.target.value)}
+                        />
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="grid gap-2 rounded-lg border border-border/70 bg-muted/25 p-3 text-xs text-muted-foreground sm:grid-cols-2">
+                    {exchangeRows.map((row) => (
+                      <div key={row.currency} className="flex justify-between gap-3">
+                        <span>1 {row.currency}</span>
+                        <span className={cn("font-medium tabular-nums", palette.primaryText)}>{formatMoney(row.value, targetCurrency)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex gap-1">
-              <button
-                type="button"
-                aria-label="切换免费资产"
-                className={cn("rounded p-1 text-muted-foreground transition", palette.hoverPrimary, excludeFree && palette.primaryText)}
-                onClick={toggleFree}
-                title={excludeFree ? "当前：已排除免费/白嫖" : "当前：包含免费/白嫖"}
-              >
-                <Heart className="size-4" />
-              </button>
-              <button
-                type="button"
-                aria-label="刷新汇率"
-                className={cn("rounded p-1 text-muted-foreground transition", palette.hoverPrimary)}
-                onClick={() => setRefreshKey((value) => value + 1)}
-                title="刷新汇率"
-              >
-                <RefreshCw className="size-4" />
-              </button>
-            </div>
-          </div>
+          </section>
         </div>
-      </section>
+      )}
 
       {tradeItem && (
         <div className="fixed inset-0 z-[1999] flex items-center justify-center bg-black/20 px-4 backdrop-blur-sm" onClick={() => setTradeItem(null)}>
