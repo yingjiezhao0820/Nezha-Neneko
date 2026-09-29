@@ -1,3 +1,5 @@
+import type { SortOrder, SortType } from "@/context/sort-context"
+import { useSort } from "@/hooks/use-sort"
 import { buildMarkdownTable, copyTextToClipboard } from "@/lib/clipboard"
 import { formatBytes } from "@/lib/format"
 import { ASSET_COLORS, resolveAssetColor } from "@/lib/theme-colors"
@@ -14,7 +16,20 @@ import {
   resolveThemeBillingCurrency,
 } from "@/lib/utils"
 import { NezhaServer } from "@/types/nezha-api"
-import { Calculator, CalendarDays, Check, CircleDollarSign, Copy, HelpCircle, RefreshCw, Trash2, X } from "lucide-react"
+import {
+  ArrowDown,
+  ArrowUp,
+  Calculator,
+  CalendarDays,
+  Check,
+  ChevronsUpDown,
+  CircleDollarSign,
+  Copy,
+  HelpCircle,
+  RefreshCw,
+  Trash2,
+  X,
+} from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 type AssetSummaryWidgetProps = {
@@ -28,8 +43,9 @@ export const ASSET_TRADE_OPEN_EVENT = "nezha:open-asset-trade"
 type BillingData = NonNullable<NonNullable<ReturnType<typeof parsePublicNote>>["billingDataMod"]>
 type FormattedServer = ReturnType<typeof formatNezhaInfo>
 type ExchangeRates = Record<string, number>
-type AssetSort = "weight_asc" | "weight_desc" | "price_asc" | "price_desc"
 type FinanceTab = "fixed" | "metered" | "rates"
+type AssetTableSortKey = "expiry" | "remaining" | "monthly"
+type AssetTableSortState = { key: AssetTableSortKey; direction: "desc" | "asc" } | null
 type TrafficMode = "sum" | "max" | "up" | "down"
 type MeteredSettings = {
   trafficMode: TrafficMode
@@ -244,14 +260,73 @@ function buildAssetItem(now: number, server: NezhaServer, rates: ExchangeRates):
   }
 }
 
-function sortAssetItems(items: AssetItem[], sortBy: AssetSort) {
+function sortAssetItemsByHomepage(items: AssetItem[], sortType: SortType, sortOrder: SortOrder) {
   return [...items].sort((a, b) => {
-    if (sortBy === "weight_asc") return a.displayIndex - b.displayIndex
-    if (sortBy === "weight_desc") return b.displayIndex - a.displayIndex
+    if (sortType !== "name") {
+      if (!a.formatted.online && b.formatted.online) return 1
+      if (a.formatted.online && !b.formatted.online) return -1
+      if (!a.formatted.online && !b.formatted.online) return 0
+    }
 
-    const aPrice = a.priceCny ?? Number.MAX_SAFE_INTEGER
-    const bPrice = b.priceCny ?? Number.MAX_SAFE_INTEGER
-    return sortBy === "price_asc" ? aPrice - bPrice : bPrice - aPrice
+    let comparison = 0
+    switch (sortType) {
+      case "name":
+        comparison = a.name.localeCompare(b.name)
+        break
+      case "uptime":
+        comparison = a.formatted.uptime - b.formatted.uptime
+        break
+      case "system":
+        comparison = a.formatted.platform.localeCompare(b.formatted.platform)
+        break
+      case "cpu":
+        comparison = a.formatted.cpu - b.formatted.cpu
+        break
+      case "mem":
+        comparison = a.formatted.mem - b.formatted.mem
+        break
+      case "disk":
+        comparison = a.formatted.disk - b.formatted.disk
+        break
+      case "up":
+        comparison = a.formatted.up - b.formatted.up
+        break
+      case "down":
+        comparison = a.formatted.down - b.formatted.down
+        break
+      case "up total":
+        comparison = a.formatted.net_out_transfer - b.formatted.net_out_transfer
+        break
+      case "down total":
+        comparison = a.formatted.net_in_transfer - b.formatted.net_in_transfer
+        break
+      default:
+        comparison = a.displayIndex - b.displayIndex
+    }
+
+    return sortOrder === "asc" ? comparison : -comparison
+  })
+}
+
+function getAssetTableSortValue(item: AssetItem, key: AssetTableSortKey): number | null {
+  if (key === "remaining") return item.remainingCny
+  if (key === "monthly") return item.monthlyCny
+  if (!item.billing?.endDate || item.billing.endDate.startsWith("0000-00-00")) return null
+
+  const expiry = Date.parse(item.billing.endDate)
+  return Number.isFinite(expiry) ? expiry : null
+}
+
+function sortAssetTableItems(items: AssetItem[], state: AssetTableSortState) {
+  if (!state) return items
+
+  return [...items].sort((a, b) => {
+    const valueA = getAssetTableSortValue(a, state.key)
+    const valueB = getAssetTableSortValue(b, state.key)
+    if (valueA === null && valueB === null) return 0
+    if (valueA === null) return 1
+    if (valueB === null) return -1
+    return state.direction === "desc" ? valueB - valueA : valueA - valueB
   })
 }
 
@@ -306,12 +381,13 @@ function useExchangeRates(refreshKey: number) {
 }
 
 export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetProps) {
+  const { sortType, sortOrder } = useSort()
   const [open, setOpen] = useState(false)
   const summaryRef = useRef<HTMLElement>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [targetCurrency, setTargetCurrency] = useState(getInitialCurrency)
-  const [sortBy, setSortBy] = useState<AssetSort>((localStorage.getItem("asset_card_sort") as AssetSort) || "weight_asc")
   const [excludeFree, setExcludeFree] = useState(localStorage.getItem("asset_card_exclude_free") !== "false")
+  const [tableSort, setTableSort] = useState<AssetTableSortState>(null)
   const [financeTab, setFinanceTab] = useState<FinanceTab>("fixed")
   const [snapshotAt, setSnapshotAt] = useState(Date.now())
   const [selectedMeteredId, setSelectedMeteredId] = useState<number | null>(null)
@@ -325,6 +401,7 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
   useEffect(() => {
     const openAssetSummary = () => {
       setSnapshotAt(Date.now())
+      setTableSort(null)
       setOpen(true)
     }
     window.addEventListener(ASSET_SUMMARY_OPEN_EVENT, openAssetSummary)
@@ -382,8 +459,9 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
 
   const visibleItems = useMemo(() => {
     const filtered = excludeFree ? items.filter((item) => !item.isFree && !item.isUsageBased && !item.isFreeTagged) : items
-    return sortAssetItems(filtered, sortBy)
-  }, [excludeFree, items, sortBy])
+    return sortAssetItemsByHomepage(filtered, sortType, sortOrder)
+  }, [excludeFree, items, sortOrder, sortType])
+  const tableItems = useMemo(() => sortAssetTableItems(visibleItems, tableSort), [tableSort, visibleItems])
 
   const totals = useMemo(() => {
     return visibleItems.reduce(
@@ -463,9 +541,17 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
     localStorage.setItem("asset_card_currency", currency)
   }
 
-  const persistSort = (sort: AssetSort) => {
-    setSortBy(sort)
-    localStorage.setItem("asset_card_sort", sort)
+  const cycleTableSort = (key: AssetTableSortKey) => {
+    setTableSort((current) => {
+      if (!current || current.key !== key) return { key, direction: "desc" }
+      if (current.direction === "desc") return { key, direction: "asc" }
+      return null
+    })
+  }
+
+  const renderTableSortIcon = (key: AssetTableSortKey) => {
+    if (tableSort?.key !== key) return <ChevronsUpDown className="size-3.5 opacity-45" />
+    return tableSort.direction === "desc" ? <ArrowDown className="size-3.5" /> : <ArrowUp className="size-3.5" />
   }
 
   const toggleFree = () => {
@@ -607,9 +693,9 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                   </p>
                 </div>
                 <div className="min-w-0 px-2">
-                  <p className="text-[11px] text-muted-foreground sm:text-xs">当前节点估算</p>
+                  <p className="text-[11px] text-muted-foreground sm:text-xs">年均支出</p>
                   <p className={cn("mt-1 truncate text-base font-semibold tabular-nums sm:text-lg", palette.primaryText)}>
-                    {formatMoney(cnyToCurrency(meteredEstimate?.totalCny ?? null, targetCurrency, rates), targetCurrency)}
+                    {formatMoney(totals.monthly * 12 * targetRate, targetCurrency)}
                   </p>
                 </div>
               </div>
@@ -650,7 +736,8 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                       <h4 className="text-sm font-semibold">固定账单明细</h4>
                       <p className="mt-0.5 text-xs text-muted-foreground">沿用 Komari 节点价格、周期及到期时间。</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] text-muted-foreground">点击表头：降序 → 升序 → 首页顺序</span>
                       <select
                         aria-label="显示币种"
                         className="h-8 rounded-md border border-border bg-background px-2 text-xs outline-none"
@@ -662,17 +749,6 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                             {currency} ({CURRENCY_SYMBOLS[currency]})
                           </option>
                         ))}
-                      </select>
-                      <select
-                        aria-label="资产排序"
-                        className="h-8 rounded-md border border-border bg-background px-2 text-xs outline-none"
-                        value={sortBy}
-                        onChange={(event) => persistSort(event.target.value as AssetSort)}
-                      >
-                        <option value="weight_asc">权重正序</option>
-                        <option value="weight_desc">权重倒序</option>
-                        <option value="price_asc">价格正序</option>
-                        <option value="price_desc">价格倒序</option>
                       </select>
                     </div>
                   </div>
@@ -690,14 +766,50 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                         <tr>
                           <th className="px-3 py-2.5 font-medium">节点</th>
                           <th className="px-3 py-2.5 font-medium">固定费用</th>
-                          <th className="px-3 py-2.5 font-medium">到期</th>
-                          <th className="px-3 py-2.5 font-medium">剩余价值</th>
-                          <th className="px-3 py-2.5 text-right font-medium">月均支出</th>
+                          <th
+                            className="px-3 py-2.5 font-medium"
+                            aria-sort={tableSort?.key === "expiry" ? (tableSort.direction === "desc" ? "descending" : "ascending") : "none"}
+                          >
+                            <button
+                              type="button"
+                              className="flex items-center gap-1 transition hover:text-white"
+                              onClick={() => cycleTableSort("expiry")}
+                            >
+                              到期
+                              {renderTableSortIcon("expiry")}
+                            </button>
+                          </th>
+                          <th
+                            className="px-3 py-2.5 font-medium"
+                            aria-sort={tableSort?.key === "remaining" ? (tableSort.direction === "desc" ? "descending" : "ascending") : "none"}
+                          >
+                            <button
+                              type="button"
+                              className="flex items-center gap-1 transition hover:text-white"
+                              onClick={() => cycleTableSort("remaining")}
+                            >
+                              剩余价值
+                              {renderTableSortIcon("remaining")}
+                            </button>
+                          </th>
+                          <th
+                            className="px-3 py-2.5 text-right font-medium"
+                            aria-sort={tableSort?.key === "monthly" ? (tableSort.direction === "desc" ? "descending" : "ascending") : "none"}
+                          >
+                            <button
+                              type="button"
+                              className="ml-auto flex items-center gap-1 transition hover:text-white"
+                              onClick={() => cycleTableSort("monthly")}
+                            >
+                              月均支出
+                              {renderTableSortIcon("monthly")}
+                            </button>
+                          </th>
                           <th className="px-3 py-2.5 text-right font-medium">操作</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/60">
-                        {visibleItems.map((item) => {
+                        {tableItems.map((item) => {
                           const expiryLabel = item.isLongTerm
                             ? "长期"
                             : item.isExpired
