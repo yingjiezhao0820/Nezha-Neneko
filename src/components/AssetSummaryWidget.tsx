@@ -737,7 +737,6 @@ export default function AssetSummaryWidget({ now, servers }: AssetSummaryWidgetP
                       <p className="mt-0.5 text-xs text-muted-foreground">沿用 Komari 节点价格、周期及到期时间。</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] text-muted-foreground">点击表头：降序 → 升序 → 首页顺序</span>
                       <select
                         aria-label="显示币种"
                         className="h-8 rounded-md border border-border bg-background px-2 text-xs outline-none"
