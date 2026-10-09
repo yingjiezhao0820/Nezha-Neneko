@@ -141,6 +141,8 @@ So-net<red>;1Gbps<green>;<HKD>;<TRD:1>;<TAG:TW>
 
 账单价格、计费周期和 `expired_at` 用于计算剩余价值及到期状态。`expired_at` 不是流量重置日期。
 
+剩余价值 = 单个计费周期的价格 × 剩余天数 ÷ 计费周期天数，再按汇率换算到展示币种。月按 30 天、年按 365 天折算；预付多个周期时，剩余价值可以超过单周期价格。
+
 ## 本地开发
 
 ```bash
@@ -151,6 +153,7 @@ npm run dev
 常用命令：
 
 ```bash
+npm test           # 账单剩余价值回归测试
 npm run lint       # ESLint 检查
 npm run build      # TypeScript 检查并构建生产文件
 npm run preview    # 本地预览生产构建

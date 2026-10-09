@@ -393,7 +393,8 @@ export function calculateRemainingBillingValue(billing: BillingData, amount: num
   }
 
   return {
-    value: amount * Math.min(1, daysLeft / cycleDays),
+    // amount 是一个计费周期的价格；预付多个周期时，剩余价值可以超过单周期价格。
+    value: amount * (daysLeft / cycleDays),
     days: Math.ceil(daysLeft),
     isExpired: false,
     isLongTerm: false,
